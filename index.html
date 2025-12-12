@@ -439,145 +439,197 @@
     </div>
   </div>
 
-  <script>
-    // ===== 熊熊小語（點頭像換一句，長按可複製）=====
-    const bearQuotes = [
-      "🐻 熊熊說：走慢一點沒關係，風景不會跑走。",
-      "🐻 熊熊說：今天最重要的不是登頂，是平安回家。",
-      "🐻 熊熊說：累了就停下來喝水，看雲，也是在前進。",
-      "🐻 熊熊說：你不需要跟別人比速度，只要照顧好自己。",
-      "🐻 熊熊說：裝備準備好，心就會更安定。"
-    ];
+<script>
+  // ========= 讀取 mountains.json =========
+  let mountains = [];        // 原始 100 座
+  let mountainsRich = [];    // 自動補齊故事/難度後的 100 座
 
-    const bubble = document.getElementById("bubble");
-    const bearBtn = document.getElementById("bearBtn");
-    let lastQuote = "";
+  async function loadMountains() {
+    const res = await fetch("./mountains.json");
+    const data = await res.json();
 
-    function setRandomBearQuote() {
-      const q = bearQuotes[Math.floor(Math.random() * bearQuotes.length)];
-      lastQuote = q;
-      bubble.innerHTML = `${q}<div class="hint">提示：長按可複製小語</div>`;
-    }
-    bearBtn.addEventListener("click", setRandomBearQuote);
+    // 兼容兩種格式：
+    // A) { "mountains": [...] }
+    // B) [ ... ]
+    mountains = Array.isArray(data) ? data : (data.mountains || []);
 
-    // 長按複製（手機好用）
-    let pressTimer = null;
-    bearBtn.addEventListener("touchstart", () => {
-      pressTimer = setTimeout(async () => {
-        try {
-          await navigator.clipboard.writeText(lastQuote || bubble.innerText.trim());
-          bubble.innerHTML = `✅ 已複製：${lastQuote || bubble.innerText.trim()}<div class="hint">（你可以貼到勇者日記/IG）</div>`;
-        } catch (e) {}
-      }, 550);
-    }, { passive: true });
+    mountainsRich = mountains.map(enrichMountain);
+    console.log("百岳載入完成：", mountainsRich.length);
+  }
 
-    ["touchend","touchmove","touchcancel"].forEach(ev=>{
-      bearBtn.addEventListener(ev, ()=>{ if(pressTimer) clearTimeout(pressTimer); }, { passive: true });
-    });
+  // ========= 難度規則（可隨時調整）=========
+  // 1) 強制危險清單（你之後要加就加）
+  const FORCE_ADVANCED = new Set([
+    "中央尖山", "南湖大山", "南湖大山東峰", "南湖大山南峰", "南湖北山",
+    "大劍山", "大霸尖山", "小霸尖山", "品田山", "劍山", "無明山"
+  ]);
 
-    // ===== 百岳示範資料（先放少量，之後你要我直接補成 100 座 JSON）=====
-    // time_estimate_hours：用「常見區間」呈現（會因天候/隊伍/負重差異）
-    const mountains = [
-      // beginner
-      { name:"石門山", elevation:3237, time:"往返 1–2 小時", type:"單日", features:["親民百岳","展望佳"], diff:"beginner",
-        story:"🐻 熊熊說：第一座百岳，不需要走得多快，你願意出發就很棒。",
-        advice:"防曬補水、保暖外套；早點上山避車潮。",
-        risk:"高山紫外線強、天氣變化快。" },
+  // 2) 強制新手清單（親民/公路型/入門常見）
+  const FORCE_BEGINNER = new Set([
+    "石門山", "合歡山主峰", "合歡山東峰", "合歡山北峰", "西合歡山"
+  ]);
 
-      { name:"合歡山主峰", elevation:3417, time:"往返 2–4 小時", type:"單日", features:["雲海日出","公路可達"], diff:"beginner",
-        story:"🐻 熊熊說：當你抬頭看到雲海，就知道今天值得。",
-        advice:"風大常見，帶風衣手套；下午容易起霧要提早回程。",
-        risk:"強風低溫、濃霧視線差。" },
+  function inferDifficulty(m) {
+    const name = (m.name_zh || "").trim();
+    const elev = Number(m.elevation_m || 0);
 
-      // intermediate
-      { name:"玉山主峰", elevation:3952, time:"單日 12–16 小時（或 2 天）", type:"單日/過夜", features:["台灣最高峰","經典路線"], diff:"intermediate",
-        story:"🐻 熊熊說：不是每個人都要登頂，但準備好的人，會走得更安心。",
-        advice:"先練長距離與爬升；注意高山反應；天候不穩就改期。",
-        risk:"高山症、低溫失溫、午後變天。" },
+    if (FORCE_BEGINNER.has(name)) return "beginner";
+    if (FORCE_ADVANCED.has(name)) return "advanced";
 
-      { name:"雪山主峰", elevation:3886, time:"單日 12–14 小時（或 2 天）", type:"單日/過夜", features:["圈谷地形","黑森林"], diff:"intermediate",
-        story:"🐻 熊熊說：圈谷像一個大抱抱，提醒你：慢慢走也能到。",
-        advice:"曝曬段補水；最後段風大保暖；配速保守。",
-        risk:"石瀑/陡上、強風、低溫。" },
+    // 依海拔做大方向分級（你要更嚴格/更寬鬆都可）
+    if (elev >= 3600) return "advanced";
+    if (elev >= 3300) return "intermediate";
+    return "beginner";
+  }
 
-      // advanced
-      { name:"中央尖山", elevation:3705, time:"多日（常見 3 天以上）", type:"多日", features:["三尖之一","地形尖峻"], diff:"advanced",
-        story:"🐻 熊熊說：知道什麼時候說『不』，也是一種成熟。",
-        advice:"建議跟熟路者/隊伍；需路線判讀與穩定下坡技術。",
-        risk:"曝險地形、迷途風險高、天候影響大。" },
-    ];
+  // ========= 熊熊故事自動生成（每座不同）=========
+  function hashToIndex(num, mod) {
+    // 穩定：同一座山每次都會選到同一組句型
+    return Math.abs((num * 2654435761) % 4294967296) % mod;
+  }
 
-    const diffLabel = { beginner:"新手友善", intermediate:"需要經驗", advanced:"建議帶隊" };
+  const STORY_TPL = {
+    beginner: [
+      (m)=>`🐻 熊熊說：${m.name_zh}像是「第一步」——慢慢走，也是在變強。`,
+      (m)=>`🐻 熊熊說：今天選${m.name_zh}很棒！你在練的不是速度，是「穩定」。`,
+      (m)=>`🐻 熊熊說：站在${m.name_zh}看風景，記得也看看自己：你正在前進。`,
+      (m)=>`🐻 熊熊說：別急，先把呼吸找回來。${m.name_zh}會陪你練耐心。`,
+      (m)=>`🐻 熊熊說：你願意出門，就已經贏一半了。${m.name_zh}是溫柔的開始。`
+    ],
+    intermediate: [
+      (m)=>`🐻 熊熊說：${m.name_zh}提醒你——準備，是把夢想走得更安全的方式。`,
+      (m)=>`🐻 熊熊說：這座山會累，但累不是壞事，它是在幫你打開新的視野。`,
+      (m)=>`🐻 熊熊說：走到一半想放棄時，先喝水、補能量，再做決定。`,
+      (m)=>`🐻 熊熊說：${m.name_zh}像一個小考驗：配速、補水、保暖，缺一不可。`,
+      (m)=>`🐻 熊熊說：你不是在征服山，你是在學會照顧自己。`
+    ],
+    advanced: [
+      (m)=>`🐻 熊熊說：${m.name_zh}不是「硬上」的山，是「尊重」的山。需要夥伴與判斷。`,
+      (m)=>`🐻 熊熊說：真正的勇敢，是知道什麼時候該撤退，什麼時候再來。`,
+      (m)=>`🐻 熊熊說：高風險路線請別獨行。把安全放第一，才有下一次的冒險。`,
+      (m)=>`🐻 熊熊說：這座山會考驗你：天候、地形、心態。先把準備做滿。`,
+      (m)=>`🐻 熊熊說：你不需要證明什麼。平安回來，就是滿分。`
+    ]
+  };
 
-    // ===== Modal 顯示 =====
-    const modalBackdrop = document.getElementById("modalBackdrop");
-    const closeModal = document.getElementById("closeModal");
-    const resultCard = document.getElementById("resultCard");
-    const modalHeadTitle = document.getElementById("modalHeadTitle");
+  const ADVICE_TPL = {
+    beginner: [
+      ()=>"防曬＋補水＋薄外套。慢慢走、勤休息。",
+      ()=>"提早出發避人潮，回程保留體力別摸黑。",
+      ()=>"登山杖會很加分，步伐小一點更省力。",
+      ()=>"高山紫外線強，帽子/墨鏡/防曬要記得。",
+      ()=>"把速度放慢，你會走得更久、更舒服。"
+    ],
+    intermediate: [
+      ()=>"先練長時間步行與爬升，行前睡飽吃好。",
+      ()=>"配速保守、補水補鹽，風大時加保暖層。",
+      ()=>"若頭痛噁心暈，優先休息觀察，必要就下撤。",
+      ()=>"帶頭燈與保暖，天候變化快要留撤退時間。",
+      ()=>"分段小目標：下一個轉彎、下一個樹影、下一口水。"
+    ],
+    advanced: [
+      ()=>"建議跟隊/有經驗者同行，路線判讀與時間控管很重要。",
+      ()=>"天候不穩直接改期；避免單獨行動，保持隊伍完整。",
+      ()=>"準備保暖、防雨、頭燈、急救與備糧，並確實回報行程。",
+      ()=>"留足撤退時間與體力，別把『登頂』當成唯一目標。",
+      ()=>"遇濃霧/強風/落石風險上升時，優先撤退不猶豫。"
+    ]
+  };
 
-    function openModal(){ modalBackdrop.style.display="flex"; modalBackdrop.setAttribute("aria-hidden","false"); }
-    function hideModal(){ modalBackdrop.style.display="none"; modalBackdrop.setAttribute("aria-hidden","true"); }
+  function inferRiskNote(diff) {
+    if (diff === "beginner") return "⚠️ 天候變化快、紫外線強；記得防曬補水與保暖。";
+    if (diff === "intermediate") return "⚠️ 高山症/失溫/午後雷雨常見；請保留撤退時間。";
+    return "⚠️ 曝險/迷途/落石風險較高；建議跟隊並確實做行程控管。";
+  }
 
-    closeModal.addEventListener("click", hideModal);
-    modalBackdrop.addEventListener("click", (e)=>{ if(e.target === modalBackdrop) hideModal(); });
+  function enrichMountain(m) {
+    const diff = inferDifficulty(m);
+    const i1 = hashToIndex(m.id || 1, 5);
+    const i2 = hashToIndex((m.id || 1) + 7, 5);
 
-    function pickMountain(diff){
-      const pool = mountains.filter(m=>m.diff===diff);
-      return pool[Math.floor(Math.random()*pool.length)];
-    }
+    // 特例加一點品牌感（你要我再加更多特例也可以）
+    let special = "";
+    if ((m.name_zh || "").includes("玉山")) special = "（台灣之巔家族）";
+    if ((m.name_zh || "") === "雪山") special = "（黑森林與圈谷的傳說）";
 
-    function renderMountain(m){
-      modalHeadTitle.textContent = `抽到：${m.name}`;
-      const feats = m.features.map(x=>`• ${x}`).join("<br>");
-      resultCard.innerHTML = `
-        <div class="m-title">
-          <div>
-            <h3>${m.name}</h3>
-            <div style="margin-top:6px;color:#7a5b6a;font-size:12px;">
-              ${feats}
-            </div>
+    return {
+      ...m,
+      difficulty: diff, // beginner | intermediate | advanced
+      bear_story: STORY_TPL[diff][i1]({ ...m, special }),
+      bear_advice: "✅ " + ADVICE_TPL[diff][i2](),
+      risk_note: inferRiskNote(diff)
+    };
+  }
+
+  // ========= 抽卡（依難度抽）=========
+  function pickByDifficulty(diff) {
+    const pool = mountainsRich.filter(x => x.difficulty === diff);
+    if (!pool.length) return null;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  // ========= 你原本的 Modal 渲染：我用同樣格式輸出 =========
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const closeModal = document.getElementById("closeModal");
+  const resultCard = document.getElementById("resultCard");
+  const modalHeadTitle = document.getElementById("modalHeadTitle");
+
+  function openModal(){ modalBackdrop.style.display="flex"; modalBackdrop.setAttribute("aria-hidden","false"); }
+  function hideModal(){ modalBackdrop.style.display="none"; modalBackdrop.setAttribute("aria-hidden","true"); }
+
+  if (closeModal) closeModal.addEventListener("click", hideModal);
+  if (modalBackdrop) modalBackdrop.addEventListener("click", (e)=>{ if(e.target === modalBackdrop) hideModal(); });
+
+  const diffLabel = { beginner:"新手友善", intermediate:"需要經驗", advanced:"建議帶隊" };
+
+  function renderMountain(m){
+    modalHeadTitle.textContent = `抽到：${m.name_zh}`;
+    resultCard.innerHTML = `
+      <div class="m-title">
+        <div>
+          <h3>${m.name_zh}</h3>
+          <div style="margin-top:6px;color:#7a5b6a;font-size:12px;">
+            • ${m.name_en || ""} <br>
+            • 海拔 ${m.elevation_m} m
           </div>
-          <div class="tag">⛰️ ${diffLabel[m.diff]}</div>
         </div>
+        <div class="tag">⛰️ ${diffLabel[m.difficulty]}</div>
+      </div>
 
-        <div class="kv">
-          <div>海拔</div><div>${m.elevation} m</div>
-          <div>行程時間</div><div>${m.time}</div>
-          <div>型態</div><div>${m.type}</div>
-        </div>
+      <div class="bearline">
+        <div style="font-weight:700;margin-bottom:6px;">出遊熊故事</div>
+        <div>${m.bear_story}</div>
 
-        <div class="bearline">
-          <div style="font-weight:700;margin-bottom:6px;">出遊熊故事</div>
-          <div>${m.story}</div>
+        <div style="font-weight:700;margin:10px 0 6px;">熊熊建議</div>
+        <div>${m.bear_advice}</div>
 
-          <div style="font-weight:700;margin:10px 0 6px;">熊熊建議</div>
-          <div>✅ ${m.advice}</div>
+        <div style="font-weight:700;margin:10px 0 6px;">風險提醒</div>
+        <div>${m.risk_note}</div>
+      </div>
+    `;
+  }
 
-          <div style="font-weight:700;margin:10px 0 6px;">風險提醒</div>
-          <div>⚠️ ${m.risk}</div>
-        </div>
-      `;
-    }
+  // ========= 三顆按鈕：依難度抽 =========
+  document.getElementById("btnBeginner")?.addEventListener("click", ()=>{
+    const m = pickByDifficulty("beginner");
+    if (!m) return alert("新手百岳池目前沒有資料");
+    renderMountain(m); openModal();
+  });
 
-    // ===== Buttons =====
-    document.getElementById("btnBeginner").addEventListener("click", ()=>{
-      const m = pickMountain("beginner");
-      renderMountain(m);
-      openModal();
-    });
-    document.getElementById("btnIntermediate").addEventListener("click", ()=>{
-      const m = pickMountain("intermediate");
-      renderMountain(m);
-      openModal();
-    });
-    document.getElementById("btnAdvanced").addEventListener("click", ()=>{
-      const m = pickMountain("advanced");
-      renderMountain(m);
-      openModal();
-    });
+  document.getElementById("btnIntermediate")?.addEventListener("click", ()=>{
+    const m = pickByDifficulty("intermediate");
+    if (!m) return alert("進階挑戰池目前沒有資料");
+    renderMountain(m); openModal();
+  });
 
-    // 初始給一句
-    setRandomBearQuote();
-  </script>
+  document.getElementById("btnAdvanced")?.addEventListener("click", ()=>{
+    const m = pickByDifficulty("advanced");
+    if (!m) return alert("需帶隊池目前沒有資料");
+    renderMountain(m); openModal();
+  });
+
+  // ========= 啟動 =========
+  loadMountains();
+</script>
 </body>
 </html>
