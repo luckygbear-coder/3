@@ -1,668 +1,268 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#f4a63a" />
   <title>爬山熊・百岳</title>
 
-  <!-- <link rel="manifest" href="./manifest.webmanifest"> -->
-
+  <!-- 正確路徑：icons/ ✅ -->
   <link rel="icon" type="image/png" sizes="192x192" href="icons/hiking_bear_icon_192.png" />
   <link rel="icon" type="image/png" sizes="512x512" href="icons/hiking_bear_icon_512.png" />
   <link rel="apple-touch-icon" href="icons/hiking_bear_icon_1024.png" />
 
-  <style>
-    :root{
-      --bg: #ffeec9;
-      --wrap: #fff4da;
-      --card: #fff7e6;
-      --border: #f2c48b;
-      --shadow: rgba(0,0,0,.12);
-      --text: #4b3044;
-      --muted: #7a5b6a;
-      --accent: #f4a63a;
-      --accent2:#ff6b6b;
-      --btn:#ffe0a8;
-      --btn2:#ffd1d1;
-      --btn3:#d9f3ff;
-    }
-
-    html,body{height:100%}
-    body{
-      margin:0;
-      background: var(--bg);
-      font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
-      color: var(--text);
-    }
-    .app{
-      max-width: 480px;
-      min-height: 100vh;
-      margin: 0 auto;
-      padding: 10px 12px 16px;
-      box-sizing: border-box;
-      background: var(--wrap);
-      display:flex;
-      flex-direction:column;
-      gap: 10px;
-    }
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding: 10px 10px 6px;
-      border-radius: 18px;
-      background: linear-gradient(180deg, rgba(244,166,58,.25), rgba(255,255,255,0));
-      border: 2px solid rgba(242,196,139,.6);
-      box-shadow: 0 6px 18px rgba(0,0,0,.06);
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width: 0;
-    }
-    .avatar{
-      width: 54px;
-      height: 54px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      background: #fff;
-      box-shadow: 0 4px 10px rgba(0,0,0,.08);
-      overflow:hidden;
-      flex: 0 0 auto;
-      position: relative;
-      cursor: pointer;
-      padding: 0;
-    }
-    .avatar img{
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      transform: scale(1.05);
-      display:block;
-    }
-    .title{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-      min-width:0;
-    }
-    .title h1{
-      margin:0;
-      font-size: 16px;
-      line-height: 1.2;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .title .sub{
-      font-size: 12px;
-      color: var(--muted);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: #fff;
-      border: 2px solid var(--border);
-      box-shadow: 0 4px 10px rgba(0,0,0,.06);
-      font-size: 12px;
-      color: var(--muted);
-      user-select:none;
-      white-space:nowrap;
-    }
-
-    .bubble{
-      position: relative;
-      background: #fff;
-      border: 2px solid var(--border);
-      border-radius: 18px;
-      padding: 10px 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.08);
-      line-height: 1.5;
-      font-size: 13px;
-    }
-    .bubble:before{
-      content:"";
-      position:absolute;
-      left: 18px;
-      top: -10px;
-      width: 18px;
-      height: 18px;
-      background:#fff;
-      border-left: 2px solid var(--border);
-      border-top: 2px solid var(--border);
-      transform: rotate(45deg);
-    }
-    .bubble .hint{
-      margin-top:6px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .card{
-      background: var(--card);
-      border-radius: 18px;
-      border: 2px solid var(--border);
-      box-shadow: 0 6px 18px rgba(0,0,0,.08);
-      padding: 12px;
-    }
-
-    .section-title{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .section-title h2{
-      margin:0;
-      font-size: 14px;
-    }
-    .section-title span{
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .btns{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:10px;
-    }
-
-    .btn{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      width:100%;
-      padding: 12px 12px;
-      border-radius: 16px;
-      border: 2px solid rgba(242,196,139,.9);
-      background: #fff;
-      box-shadow: 0 6px 14px rgba(0,0,0,.08);
-      cursor:pointer;
-      text-align:left;
-      transition: transform .06s ease, opacity .2s ease;
-    }
-    .btn:active{ transform: translateY(1px) scale(.995); }
-    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
-
-    .btn .left{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width:0;
-    }
-    .ico{
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size: 20px;
-      border: 2px solid rgba(0,0,0,.06);
-      flex: 0 0 auto;
-    }
-    .btn .txt{ min-width:0; }
-    .btn .txt b{
-      display:block;
-      font-size: 14px;
-      margin-bottom:2px;
-    }
-    .btn .txt small{
-      display:block;
-      font-size: 12px;
-      color: var(--muted);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .arrow{
-      font-size: 18px;
-      color: rgba(75,48,68,.55);
-      flex: 0 0 auto;
-    }
-
-    .btn.beginner .ico{ background: var(--btn); }
-    .btn.intermediate .ico{ background: var(--btn3); }
-    .btn.advanced .ico{ background: var(--btn2); }
-
-    .modal-backdrop{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.45);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding: 16px;
-      z-index: 50;
-    }
-    .modal{
-      width: min(480px, 100%);
-      background: #fff;
-      border-radius: 20px;
-      border: 2px solid var(--border);
-      box-shadow: 0 14px 40px rgba(0,0,0,.25);
-      overflow:hidden;
-    }
-    .modal-head{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding: 10px 12px;
-      background: linear-gradient(180deg, rgba(244,166,58,.22), rgba(255,255,255,0));
-      border-bottom: 1px dashed rgba(242,196,139,.9);
-    }
-    .modal-head b{ font-size: 14px; }
-    .close{
-      border:none;
-      background:#fff;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 6px 10px;
-      cursor:pointer;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .modal-body{ padding: 12px; }
-    .m-card{
-      background: var(--card);
-      border: 2px solid rgba(242,196,139,.9);
-      border-radius: 18px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.08);
-      padding: 12px;
-      line-height: 1.6;
-      font-size: 13px;
-    }
-    .m-title{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:8px;
-    }
-    .m-title h3{
-      margin:0;
-      font-size: 15px;
-      line-height:1.2;
-    }
-    .tag{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      background:#fff;
-      border: 2px solid rgba(0,0,0,.06);
-      color: var(--muted);
-      white-space:nowrap;
-    }
-    .bearline{
-      margin-top:10px;
-      padding-top:10px;
-      border-top: 1px dashed rgba(242,196,139,.95);
-    }
-    .footer-safe{
-      margin-top: 10px;
-      font-size: 11px;
-      color: var(--muted);
-      background: rgba(244,166,58,.12);
-      border: 1px dashed rgba(244,166,58,.55);
-      padding: 8px 10px;
-      border-radius: 14px;
-    }
-    .bottom-note{
-      margin-top:auto;
-      text-align:center;
-      font-size: 11px;
-      color: var(--muted);
-      padding: 6px 2px 2px;
-    }
-  </style>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
   <div class="app">
+    <!-- Topbar -->
     <header class="topbar">
       <div class="brand">
-        <button class="avatar" id="bearBtn" aria-label="點我聽熊熊小語（可長按複製）" title="點我聽熊熊小語（可長按複製）">
-          <!-- ✅ 修正：路徑統一指向 icons/ -->
+        <button class="avatar" id="bearBtn" title="點我換一句小語（長按可複製）" aria-label="點我換一句小語（長按可複製）">
           <img src="icons/hiking_bear_icon_1024.png" alt="爬山熊" />
         </button>
         <div class="title">
-          <h1>爬山熊・百岳抽卡</h1>
-          <div class="sub">選難度 → 抽一座山 → 看到熊熊提醒</div>
+          <h1>爬山熊・百岳</h1>
+          <div class="sub" id="subTitle">抽山・集卡・日記本</div>
         </div>
       </div>
-      <div class="pill" id="statusPill">⛰️ 載入中…</div>
+
+      <div class="top-right">
+        <div class="pill" id="statusPill">⛰️ 載入中…</div>
+        <div class="pill" id="progressPill">✅ 0 / 100</div>
+      </div>
     </header>
 
-    <div class="bubble" id="bubble">
-      🐻 熊熊說：點一下我的頭像，我會跟你說一句出發小語～
-      <div class="hint">提示：長按可複製小語</div>
-    </div>
-
-    <section class="card">
-      <div class="section-title">
-        <h2>今天想挑戰哪種路線？</h2>
-        <span>（先做抽卡，資料可擴充到 100 座）</span>
-      </div>
-
-      <div class="btns">
-        <button class="btn beginner" id="btnBeginner" disabled>
-          <div class="left">
-            <div class="ico">🎒</div>
-            <div class="txt">
-              <b>新手百岳</b>
-              <small>慢慢走也很棒（更親民、風險相對可控）</small>
-            </div>
-          </div>
-          <div class="arrow">›</div>
-        </button>
-
-        <button class="btn intermediate" id="btnIntermediate" disabled>
-          <div class="left">
-            <div class="ico">🥾</div>
-            <div class="txt">
-              <b>進階挑戰</b>
-              <small>需要體能與準備（路線更長、變化更大）</small>
-            </div>
-          </div>
-          <div class="arrow">›</div>
-        </button>
-
-        <button class="btn advanced" id="btnAdvanced" disabled>
-          <div class="left">
-            <div class="ico">⚠️</div>
-            <div class="txt">
-              <b>熊熊提醒：需帶隊</b>
-              <small>曝險或迷途風險更高（建議跟熟路者）</small>
-            </div>
-          </div>
-          <div class="arrow">›</div>
-        </button>
+    <!-- Progress bar -->
+    <section class="progress-card">
+      <div class="progress-row">
+        <div class="progress-title">
+          <b>登山進度</b>
+          <span id="progressText">0 / 100</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <div class="progress-hint" id="milestoneHint">每征服 10 座會解鎖祝賀卡 🎉</div>
       </div>
     </section>
 
-    <div class="bottom-note">
-      🧡 安全第一：天氣不好就改期；能平安回家才是最棒的冒險。
-    </div>
+    <!-- Bubble -->
+    <section class="bubble" id="bubble">
+      🐻 熊熊說：點一下我的頭像，我會跟你說一句出發小語～
+      <div class="hint">提示：長按可複製小語</div>
+    </section>
+
+    <!-- Pages -->
+    <main class="pages">
+
+      <!-- Page: 抽卡 -->
+      <section class="page active" id="page-draw">
+        <div class="card">
+          <div class="card-head">
+            <h2>今天想挑戰哪種路線？</h2>
+            <div class="toggles">
+              <label class="toggle">
+                <input type="checkbox" id="toggleCardMode" checked />
+                <span>集卡模式（征服後不再抽）</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="btns">
+            <button class="btn beginner" id="btnBeginner">
+              <div class="left">
+                <div class="ico">🎒</div>
+                <div class="txt">
+                  <b>新手百岳</b>
+                  <small>親民路線，慢慢走也很棒</small>
+                </div>
+              </div>
+              <div class="arrow">›</div>
+            </button>
+
+            <button class="btn intermediate" id="btnIntermediate">
+              <div class="left">
+                <div class="ico">🥾</div>
+                <div class="txt">
+                  <b>進階挑戰</b>
+                  <small>體能與準備更重要</small>
+                </div>
+              </div>
+              <div class="arrow">›</div>
+            </button>
+
+            <button class="btn advanced" id="btnAdvanced">
+              <div class="left">
+                <div class="ico">⚠️</div>
+                <div class="txt">
+                  <b>熊熊提醒：需帶隊</b>
+                  <small>曝險/迷途風險較高</small>
+                </div>
+              </div>
+              <div class="arrow">›</div>
+            </button>
+          </div>
+
+          <div class="mini-actions">
+            <button class="mini" id="btnHistory">📜 抽卡紀錄</button>
+            <button class="mini" id="btnExportHistory">📸 匯出抽卡 IG 圖</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page: 百岳資料 -->
+      <section class="page" id="page-mountains">
+        <div class="card">
+          <div class="card-head">
+            <h2>百岳資料</h2>
+            <div class="subline">可搜尋、可勾選「已征服」</div>
+          </div>
+
+          <div class="search-row">
+            <input class="input" id="searchInput" placeholder="搜尋山名（例如：玉山 / 雪山 / 合歡）" />
+            <select class="select" id="diffFilter">
+              <option value="all">全部難度</option>
+              <option value="beginner">新手</option>
+              <option value="intermediate">進階</option>
+              <option value="advanced">需帶隊</option>
+            </select>
+          </div>
+
+          <div class="list" id="mountainList"></div>
+        </div>
+      </section>
+
+      <!-- Page: 山旅日記 -->
+      <section class="page" id="page-journal">
+        <div class="card">
+          <div class="card-head">
+            <h2>山旅日記本</h2>
+            <div class="subline">選日期、選山、上傳照片、寫一段話</div>
+          </div>
+
+          <div class="form">
+            <label class="field">
+              <span>日期</span>
+              <input class="input" type="date" id="journalDate" />
+            </label>
+
+            <label class="field">
+              <span>山名</span>
+              <select class="select" id="journalMountain"></select>
+            </label>
+
+            <label class="field">
+              <span>照片</span>
+              <input class="input" type="file" id="journalPhoto" accept="image/*" />
+              <small class="small">提示：照片會存在本機（localStorage），不會上傳到網路。</small>
+              <div class="photo-preview" id="photoPreview" hidden></div>
+            </label>
+
+            <label class="field">
+              <span>留一段話</span>
+              <textarea class="textarea" id="journalText" rows="4" placeholder="今天的天氣、心情、路線、你想記下的一句話…"></textarea>
+            </label>
+
+            <div class="row">
+              <button class="btn solid" id="saveJournal">💾 儲存日記</button>
+              <button class="btn" id="resetJournal">清空</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="card-head">
+            <h2>我的登山紀錄</h2>
+            <div class="subline">可依日期/山名查詢</div>
+          </div>
+
+          <div class="search-row">
+            <input class="input" id="journalQuery" placeholder="搜尋（日期或山名）" />
+            <button class="mini" id="exportJournalIG">📸 匯出最新日記 IG 圖</button>
+          </div>
+
+          <div class="list" id="journalList"></div>
+        </div>
+      </section>
+
+      <!-- Page: 設定 -->
+      <section class="page" id="page-settings">
+        <div class="card">
+          <div class="card-head">
+            <h2>設定</h2>
+            <div class="subline">清除資料、重置集卡</div>
+          </div>
+
+          <div class="settings">
+            <button class="btn danger" id="btnResetVisited">重置「已征服」</button>
+            <button class="btn danger" id="btnResetHistory">清除抽卡紀錄</button>
+            <button class="btn danger" id="btnResetJournal">清除日記本</button>
+            <button class="btn danger" id="btnResetAll">全部清除（重置 App）</button>
+          </div>
+
+          <div class="footer-note">
+            📷 爬山熊 IG：
+            <a href="https://www.instagram.com/luckygbear" target="_blank" rel="noopener">@luckygbear</a>
+            <br/>
+            🧡 安全第一：天氣不好就改期；能平安回家才是最棒的冒險。
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Tab -->
+    <nav class="tabbar">
+      <button class="tab active" data-tab="draw">
+        <span class="t-ico">🎴</span><span class="t-txt">抽山</span>
+      </button>
+      <button class="tab" data-tab="mountains">
+        <span class="t-ico">⛰️</span><span class="t-txt">百岳</span>
+      </button>
+      <button class="tab" data-tab="journal">
+        <span class="t-ico">📔</span><span class="t-txt">日記</span>
+      </button>
+      <button class="tab" data-tab="settings">
+        <span class="t-ico">⚙️</span><span class="t-txt">設定</span>
+      </button>
+    </nav>
   </div>
 
-  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <!-- Modal: 抽到的山 -->
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
     <div class="modal">
       <div class="modal-head">
-        <b id="modalHeadTitle">爬山熊抽到的山</b>
+        <b id="modalHeadTitle">抽到的山</b>
         <button class="close" id="closeModal">關閉</button>
       </div>
       <div class="modal-body">
         <div class="m-card" id="resultCard"></div>
-        <div class="footer-safe">
-          ⚠️ 安全提醒：高山症、低溫失溫、午後雷陣雨、濃霧迷途都很常見。請依天候與自身狀況調整或撤退。
+        <div class="safe">
+          ⚠️ 安全提醒：高山症、失溫、午後雷雨、濃霧迷途都很常見。請依天候與自身狀況調整或撤退。
         </div>
       </div>
     </div>
   </div>
 
-<script>
-  // ========= DOM =========
-  const statusPill = document.getElementById("statusPill");
-  const bubble = document.getElementById("bubble");
-  const bearBtn = document.getElementById("bearBtn");
-
-  const btnBeginner = document.getElementById("btnBeginner");
-  const btnIntermediate = document.getElementById("btnIntermediate");
-  const btnAdvanced = document.getElementById("btnAdvanced");
-
-  const modalBackdrop = document.getElementById("modalBackdrop");
-  const closeModal = document.getElementById("closeModal");
-  const resultCard = document.getElementById("resultCard");
-  const modalHeadTitle = document.getElementById("modalHeadTitle");
-
-  function setStatus(text){ if(statusPill) statusPill.textContent = text; }
-
-  function enableButtons(enable){
-    [btnBeginner, btnIntermediate, btnAdvanced].forEach(b=>{
-      if(!b) return;
-      b.disabled = !enable;
-    });
-  }
-
-  // ========= 熊熊小語（點頭像換一句；長按可複製 bubble 內容）=========
-  const BEAR_LINES = [
-    "🐻 熊熊說：你不用很厲害才開始，你開始了就會越來越厲害。",
-    "🐻 熊熊說：今天把安全放第一名，你就已經是高手了。",
-    "🐻 熊熊說：慢慢走、好好呼吸，風景會在前方等你。",
-    "🐻 熊熊說：登山不是比快，是比誰更會照顧自己。",
-    "🐻 熊熊說：如果天氣不好，改期也是一種勇敢。"
-  ];
-  let bearLineIdx = 0;
-  function nextBearLine(){
-    bearLineIdx = (bearLineIdx + 1) % BEAR_LINES.length;
-    bubble.innerHTML = `${BEAR_LINES[bearLineIdx]}<div class="hint">提示：長按可複製小語</div>`;
-  }
-  bearBtn?.addEventListener("click", nextBearLine);
-
-  // 長按複製
-  let pressTimer = null;
-  function copyBubble(){
-    const text = bubble?.innerText?.trim() || "";
-    if(!text) return;
-    navigator.clipboard?.writeText(text).then(()=>{
-      setStatus("✅ 已複製熊熊小語");
-      setTimeout(()=>setStatus("⛰️ 今日狀態：準備出發"), 1200);
-    }).catch(()=>{});
-  }
-  bearBtn?.addEventListener("touchstart", ()=>{ pressTimer = setTimeout(copyBubble, 550); }, {passive:true});
-  bearBtn?.addEventListener("touchend", ()=>{ if(pressTimer) clearTimeout(pressTimer); pressTimer=null; });
-  bearBtn?.addEventListener("mousedown", ()=>{ pressTimer = setTimeout(copyBubble, 550); });
-  bearBtn?.addEventListener("mouseup", ()=>{ if(pressTimer) clearTimeout(pressTimer); pressTimer=null; });
-
-  // ========= Modal =========
-  function openModal(){ modalBackdrop.style.display="flex"; modalBackdrop.setAttribute("aria-hidden","false"); }
-  function hideModal(){ modalBackdrop.style.display="none"; modalBackdrop.setAttribute("aria-hidden","true"); }
-
-  closeModal?.addEventListener("click", hideModal);
-  modalBackdrop?.addEventListener("click", (e)=>{ if(e.target === modalBackdrop) hideModal(); });
-
-  // ========= 讀取 mountains.rich.json（含容錯）=========
-  let mountains = [];
-  let mountainsRich = [];
-
-  async function loadMountains() {
-    try{
-      setStatus("⛰️ 載入百岳資料中…");
-      enableButtons(false);
-
-      const res = await fetch("mountains.rich.json", { cache: "no-store" });
-      if(!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-
-      mountains = Array.isArray(data) ? data : (data.mountains || []);
-      mountainsRich = mountains.map(enrichMountain);
-
-      if(!mountainsRich.length) throw new Error("資料為空（mountainsRich.length=0）");
-
-      setStatus("⛰️ 今日狀態：準備出發");
-      enableButtons(true);
-      console.log("百岳載入完成：", mountainsRich.length);
-    }catch(err){
-      console.error("載入百岳失敗：", err);
-      setStatus("❌ 百岳資料載入失敗");
-      enableButtons(true); // 讓按鈕還能按，但會提示池沒資料
-      bubble.innerHTML = `🐻 熊熊說：我沒有找到 mountains.rich.json。<br>請確認檔案路徑與名稱正確。<div class="hint">提示：把 JSON 放在同層，檔名要一模一樣。</div>`;
-    }
-  }
-
-  // ========= 難度規則 =========
-  const FORCE_ADVANCED = new Set([
-    "中央尖山", "南湖大山", "南湖大山東峰", "南湖大山南峰", "南湖北山",
-    "大劍山", "大霸尖山", "小霸尖山", "品田山", "劍山", "無明山"
-  ]);
-
-  const FORCE_BEGINNER = new Set([
-    "石門山", "合歡山主峰", "合歡山東峰", "合歡山北峰", "西合歡山"
-  ]);
-
-  function inferDifficulty(m) {
-    const name = (m.name_zh || "").trim();
-    const elev = Number(m.elevation_m || 0);
-
-    if (FORCE_BEGINNER.has(name)) return "beginner";
-    if (FORCE_ADVANCED.has(name)) return "advanced";
-
-    if (elev >= 3600) return "advanced";
-    if (elev >= 3300) return "intermediate";
-    return "beginner";
-  }
-
-  // ========= 熊熊故事自動生成 =========
-  function hashToIndex(num, mod) {
-    return Math.abs((num * 2654435761) % 4294967296) % mod;
-  }
-
-  const STORY_TPL = {
-    beginner: [
-      (m)=>`🐻 熊熊說：${m.name_zh}像是「第一步」——慢慢走，也是在變強。`,
-      (m)=>`🐻 熊熊說：今天選${m.name_zh}很棒！你在練的不是速度，是「穩定」。`,
-      (m)=>`🐻 熊熊說：站在${m.name_zh}看風景，記得也看看自己：你正在前進。`,
-      (m)=>`🐻 熊熊說：別急，先把呼吸找回來。${m.name_zh}會陪你練耐心。`,
-      (m)=>`🐻 熊熊說：你願意出門，就已經贏一半了。${m.name_zh}是溫柔的開始。`
-    ],
-    intermediate: [
-      (m)=>`🐻 熊熊說：${m.name_zh}提醒你——準備，是把夢想走得更安全的方式。`,
-      (m)=>`🐻 熊熊說：這座山會累，但累不是壞事，它是在幫你打開新的視野。`,
-      (m)=>`🐻 熊熊說：走到一半想放棄時，先喝水、補能量，再做決定。`,
-      (m)=>`🐻 熊熊說：${m.name_zh}像一個小考驗：配速、補水、保暖，缺一不可。`,
-      (m)=>`🐻 熊熊說：你不是在征服山，你是在學會照顧自己。`
-    ],
-    advanced: [
-      (m)=>`🐻 熊熊說：${m.name_zh}不是「硬上」的山，是「尊重」的山。需要夥伴與判斷。`,
-      (m)=>`🐻 熊熊說：真正的勇敢，是知道什麼時候該撤退，什麼時候再來。`,
-      (m)=>`🐻 熊熊說：高風險路線請別獨行。把安全放第一，才有下一次的冒險。`,
-      (m)=>`🐻 熊熊說：這座山會考驗你：天候、地形、心態。先把準備做滿。`,
-      (m)=>`🐻 熊熊說：你不需要證明什麼。平安回來，就是滿分。`
-    ]
-  };
-
-  const ADVICE_TPL = {
-    beginner: [
-      ()=>"防曬＋補水＋薄外套。慢慢走、勤休息。",
-      ()=>"提早出發避人潮，回程保留體力別摸黑。",
-      ()=>"登山杖會很加分，步伐小一點更省力。",
-      ()=>"高山紫外線強，帽子/墨鏡/防曬要記得。",
-      ()=>"把速度放慢，你會走得更久、更舒服。"
-    ],
-    intermediate: [
-      ()=>"先練長時間步行與爬升，行前睡飽吃好。",
-      ()=>"配速保守、補水補鹽，風大時加保暖層。",
-      ()=>"若頭痛噁心暈，優先休息觀察，必要就下撤。",
-      ()=>"帶頭燈與保暖，天候變化快要留撤退時間。",
-      ()=>"分段小目標：下一個轉彎、下一個樹影、下一口水。"
-    ],
-    advanced: [
-      ()=>"建議跟隊/有經驗者同行，路線判讀與時間控管很重要。",
-      ()=>"天候不穩直接改期；避免單獨行動，保持隊伍完整。",
-      ()=>"準備保暖、防雨、頭燈、急救與備糧，並確實回報行程。",
-      ()=>"留足撤退時間與體力，別把『登頂』當成唯一目標。",
-      ()=>"遇濃霧/強風/落石風險上升時，優先撤退不猶豫。"
-    ]
-  };
-
-  function inferRiskNote(diff) {
-    if (diff === "beginner") return "⚠️ 天候變化快、紫外線強；記得防曬補水與保暖。";
-    if (diff === "intermediate") return "⚠️ 高山症/失溫/午後雷雨常見；請保留撤退時間。";
-    return "⚠️ 曝險/迷途/落石風險較高；建議跟隊並確實做行程控管。";
-  }
-
-  function enrichMountain(m) {
-    const diff = inferDifficulty(m);
-    const i1 = hashToIndex(m.id || 1, 5);
-    const i2 = hashToIndex((m.id || 1) + 7, 5);
-
-    let special = "";
-    if ((m.name_zh || "").includes("玉山")) special = "（台灣之巔家族）";
-    if ((m.name_zh || "") === "雪山") special = "（黑森林與圈谷的傳說）";
-
-    return {
-      ...m,
-      difficulty: diff,
-      bear_story: STORY_TPL[diff][i1]({ ...m, special }),
-      bear_advice: "✅ " + ADVICE_TPL[diff][i2](),
-      risk_note: inferRiskNote(diff)
-    };
-  }
-
-  // ========= 抽卡 =========
-  function pickByDifficulty(diff) {
-    const pool = mountainsRich.filter(x => x.difficulty === diff);
-    if (!pool.length) return null;
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
-
-  const diffLabel = { beginner:"新手友善", intermediate:"需要經驗", advanced:"建議帶隊" };
-
-  function renderMountain(m){
-    modalHeadTitle.textContent = `抽到：${m.name_zh}`;
-    resultCard.innerHTML = `
-      <div class="m-title">
-        <div>
-          <h3>${m.name_zh}</h3>
-          <div style="margin-top:6px;color:#7a5b6a;font-size:12px;">
-            • ${(m.name_en || "").trim()} <br>
-            • 海拔 ${m.elevation_m} m
-          </div>
+  <!-- Modal: 祝賀卡 -->
+  <div class="modal-backdrop" id="celeBackdrop" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-head">
+        <b id="celeTitle">🎉 特別祝賀卡</b>
+        <button class="close" id="closeCele">關閉</button>
+      </div>
+      <div class="modal-body">
+        <div class="m-card" id="celeBody"></div>
+        <div class="row">
+          <button class="btn solid" id="exportCeleIG">📸 匯出 IG 祝賀圖</button>
+          <button class="btn" id="closeCele2">稍後</button>
         </div>
-        <div class="tag">⛰️ ${diffLabel[m.difficulty]}</div>
       </div>
+    </div>
+  </div>
 
-      <div class="bearline">
-        <div style="font-weight:700;margin-bottom:6px;">爬山熊故事</div>
-        <div>${m.bear_story}</div>
-
-        <div style="font-weight:700;margin:10px 0 6px;">熊熊建議</div>
-        <div>${m.bear_advice}</div>
-
-        <div style="font-weight:700;margin:10px 0 6px;">風險提醒</div>
-        <div>${m.risk_note}</div>
-      </div>
-    `;
-  }
-
-  btnBeginner?.addEventListener("click", ()=>{
-    const m = pickByDifficulty("beginner");
-    if (!m) return alert("新手百岳池目前沒有資料（可能 JSON 未載入或資料未分類）");
-    renderMountain(m); openModal();
-  });
-
-  btnIntermediate?.addEventListener("click", ()=>{
-    const m = pickByDifficulty("intermediate");
-    if (!m) return alert("進階挑戰池目前沒有資料（可能 JSON 未載入或資料未分類）");
-    renderMountain(m); openModal();
-  });
-
-  btnAdvanced?.addEventListener("click", ()=>{
-    const m = pickByDifficulty("advanced");
-    if (!m) return alert("需帶隊池目前沒有資料（可能 JSON 未載入或資料未分類）");
-    renderMountain(m); openModal();
-  });
-
-  // ========= 啟動 =========
-  loadMountains();
-</script>
+  <script src="./script.js"></script>
 </body>
 </html>
