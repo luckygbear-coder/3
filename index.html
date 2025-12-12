@@ -6,10 +6,8 @@
   <meta name="theme-color" content="#f4a63a" />
   <title>爬山熊・百岳</title>
 
-  <!-- PWA（如果你有 manifest 檔就把檔名改成你的） -->
   <!-- <link rel="manifest" href="./manifest.webmanifest"> -->
 
-  <!-- App Icons（把檔案放在同一層，或改成 ./icons/xxx.png） -->
   <link rel="icon" type="image/png" sizes="192x192" href="icons/hiking_bear_icon_192.png" />
   <link rel="icon" type="image/png" sizes="512x512" href="icons/hiking_bear_icon_512.png" />
   <link rel="apple-touch-icon" href="icons/hiking_bear_icon_1024.png" />
@@ -49,7 +47,6 @@
       gap: 10px;
     }
 
-    /* Header */
     .topbar{
       display:flex;
       align-items:center;
@@ -77,12 +74,15 @@
       overflow:hidden;
       flex: 0 0 auto;
       position: relative;
+      cursor: pointer;
+      padding: 0;
     }
     .avatar img{
       width:100%;
       height:100%;
       object-fit: cover;
       transform: scale(1.05);
+      display:block;
     }
     .title{
       display:flex;
@@ -118,9 +118,9 @@
       font-size: 12px;
       color: var(--muted);
       user-select:none;
+      white-space:nowrap;
     }
 
-    /* Speech bubble */
     .bubble{
       position: relative;
       background: #fff;
@@ -147,13 +147,6 @@
       margin-top:6px;
       font-size: 11px;
       color: var(--muted);
-    }
-
-    /* Buttons grid */
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:10px;
     }
 
     .card{
@@ -199,9 +192,10 @@
       box-shadow: 0 6px 14px rgba(0,0,0,.08);
       cursor:pointer;
       text-align:left;
-      transition: transform .06s ease;
+      transition: transform .06s ease, opacity .2s ease;
     }
     .btn:active{ transform: translateY(1px) scale(.995); }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
 
     .btn .left{
       display:flex;
@@ -220,9 +214,7 @@
       border: 2px solid rgba(0,0,0,.06);
       flex: 0 0 auto;
     }
-    .btn .txt{
-      min-width:0;
-    }
+    .btn .txt{ min-width:0; }
     .btn .txt b{
       display:block;
       font-size: 14px;
@@ -246,7 +238,6 @@
     .btn.intermediate .ico{ background: var(--btn3); }
     .btn.advanced .ico{ background: var(--btn2); }
 
-    /* Result Modal */
     .modal-backdrop{
       position: fixed;
       inset: 0;
@@ -286,9 +277,7 @@
       color: var(--muted);
     }
 
-    .modal-body{
-      padding: 12px;
-    }
+    .modal-body{ padding: 12px; }
     .m-card{
       background: var(--card);
       border: 2px solid rgba(242,196,139,.9);
@@ -322,14 +311,6 @@
       color: var(--muted);
       white-space:nowrap;
     }
-    .kv{
-      display:grid;
-      grid-template-columns: 96px 1fr;
-      gap:6px 10px;
-      margin-top:8px;
-      font-size: 13px;
-    }
-    .kv div:nth-child(odd){ color: var(--muted); }
     .bearline{
       margin-top:10px;
       padding-top:10px;
@@ -344,8 +325,6 @@
       padding: 8px 10px;
       border-radius: 14px;
     }
-
-    /* bottom */
     .bottom-note{
       margin-top:auto;
       text-align:center;
@@ -361,14 +340,15 @@
     <header class="topbar">
       <div class="brand">
         <button class="avatar" id="bearBtn" aria-label="點我聽熊熊小語（可長按複製）" title="點我聽熊熊小語（可長按複製）">
-          <img src="./hiking_bear_icon_1024.png" alt="出遊熊" />
+          <!-- ✅ 修正：路徑統一指向 icons/ -->
+          <img src="icons/hiking_bear_icon_1024.png" alt="爬山熊" />
         </button>
         <div class="title">
-          <h1>出遊熊・百岳抽卡</h1>
+          <h1>爬山熊・百岳抽卡</h1>
           <div class="sub">選難度 → 抽一座山 → 看到熊熊提醒</div>
         </div>
       </div>
-      <div class="pill" id="statusPill">⛰️ 今日狀態：準備出發</div>
+      <div class="pill" id="statusPill">⛰️ 載入中…</div>
     </header>
 
     <div class="bubble" id="bubble">
@@ -379,11 +359,11 @@
     <section class="card">
       <div class="section-title">
         <h2>今天想挑戰哪種路線？</h2>
-        <span>（先做抽卡，資料可隨時擴充成 100 座）</span>
+        <span>（先做抽卡，資料可擴充到 100 座）</span>
       </div>
 
       <div class="btns">
-        <button class="btn beginner" id="btnBeginner">
+        <button class="btn beginner" id="btnBeginner" disabled>
           <div class="left">
             <div class="ico">🎒</div>
             <div class="txt">
@@ -394,7 +374,7 @@
           <div class="arrow">›</div>
         </button>
 
-        <button class="btn intermediate" id="btnIntermediate">
+        <button class="btn intermediate" id="btnIntermediate" disabled>
           <div class="left">
             <div class="ico">🥾</div>
             <div class="txt">
@@ -405,7 +385,7 @@
           <div class="arrow">›</div>
         </button>
 
-        <button class="btn advanced" id="btnAdvanced">
+        <button class="btn advanced" id="btnAdvanced" disabled>
           <div class="left">
             <div class="ico">⚠️</div>
             <div class="txt">
@@ -423,11 +403,10 @@
     </div>
   </div>
 
-  <!-- Modal -->
   <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal">
       <div class="modal-head">
-        <b id="modalHeadTitle">出遊熊抽到的山</b>
+        <b id="modalHeadTitle">爬山熊抽到的山</b>
         <button class="close" id="closeModal">關閉</button>
       </div>
       <div class="modal-body">
@@ -440,31 +419,101 @@
   </div>
 
 <script>
-  // ========= 讀取 mountains.json =========
-  let mountains = [];        // 原始 100 座
-  let mountainsRich = [];    // 自動補齊故事/難度後的 100 座
+  // ========= DOM =========
+  const statusPill = document.getElementById("statusPill");
+  const bubble = document.getElementById("bubble");
+  const bearBtn = document.getElementById("bearBtn");
 
-  async function loadMountains() {
-    const res = await fetch("./mountains.rich.json");
-    const data = await res.json();
+  const btnBeginner = document.getElementById("btnBeginner");
+  const btnIntermediate = document.getElementById("btnIntermediate");
+  const btnAdvanced = document.getElementById("btnAdvanced");
 
-    // 兼容兩種格式：
-    // A) { "mountains": [...] }
-    // B) [ ... ]
-    mountains = Array.isArray(data) ? data : (data.mountains || []);
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const closeModal = document.getElementById("closeModal");
+  const resultCard = document.getElementById("resultCard");
+  const modalHeadTitle = document.getElementById("modalHeadTitle");
 
-    mountainsRich = mountains.map(enrichMountain);
-    console.log("百岳載入完成：", mountainsRich.length);
+  function setStatus(text){ if(statusPill) statusPill.textContent = text; }
+
+  function enableButtons(enable){
+    [btnBeginner, btnIntermediate, btnAdvanced].forEach(b=>{
+      if(!b) return;
+      b.disabled = !enable;
+    });
   }
 
-  // ========= 難度規則（可隨時調整）=========
-  // 1) 強制危險清單（你之後要加就加）
+  // ========= 熊熊小語（點頭像換一句；長按可複製 bubble 內容）=========
+  const BEAR_LINES = [
+    "🐻 熊熊說：你不用很厲害才開始，你開始了就會越來越厲害。",
+    "🐻 熊熊說：今天把安全放第一名，你就已經是高手了。",
+    "🐻 熊熊說：慢慢走、好好呼吸，風景會在前方等你。",
+    "🐻 熊熊說：登山不是比快，是比誰更會照顧自己。",
+    "🐻 熊熊說：如果天氣不好，改期也是一種勇敢。"
+  ];
+  let bearLineIdx = 0;
+  function nextBearLine(){
+    bearLineIdx = (bearLineIdx + 1) % BEAR_LINES.length;
+    bubble.innerHTML = `${BEAR_LINES[bearLineIdx]}<div class="hint">提示：長按可複製小語</div>`;
+  }
+  bearBtn?.addEventListener("click", nextBearLine);
+
+  // 長按複製
+  let pressTimer = null;
+  function copyBubble(){
+    const text = bubble?.innerText?.trim() || "";
+    if(!text) return;
+    navigator.clipboard?.writeText(text).then(()=>{
+      setStatus("✅ 已複製熊熊小語");
+      setTimeout(()=>setStatus("⛰️ 今日狀態：準備出發"), 1200);
+    }).catch(()=>{});
+  }
+  bearBtn?.addEventListener("touchstart", ()=>{ pressTimer = setTimeout(copyBubble, 550); }, {passive:true});
+  bearBtn?.addEventListener("touchend", ()=>{ if(pressTimer) clearTimeout(pressTimer); pressTimer=null; });
+  bearBtn?.addEventListener("mousedown", ()=>{ pressTimer = setTimeout(copyBubble, 550); });
+  bearBtn?.addEventListener("mouseup", ()=>{ if(pressTimer) clearTimeout(pressTimer); pressTimer=null; });
+
+  // ========= Modal =========
+  function openModal(){ modalBackdrop.style.display="flex"; modalBackdrop.setAttribute("aria-hidden","false"); }
+  function hideModal(){ modalBackdrop.style.display="none"; modalBackdrop.setAttribute("aria-hidden","true"); }
+
+  closeModal?.addEventListener("click", hideModal);
+  modalBackdrop?.addEventListener("click", (e)=>{ if(e.target === modalBackdrop) hideModal(); });
+
+  // ========= 讀取 mountains.rich.json（含容錯）=========
+  let mountains = [];
+  let mountainsRich = [];
+
+  async function loadMountains() {
+    try{
+      setStatus("⛰️ 載入百岳資料中…");
+      enableButtons(false);
+
+      const res = await fetch("./mountains.rich.json", { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+
+      mountains = Array.isArray(data) ? data : (data.mountains || []);
+      mountainsRich = mountains.map(enrichMountain);
+
+      if(!mountainsRich.length) throw new Error("資料為空（mountainsRich.length=0）");
+
+      setStatus("⛰️ 今日狀態：準備出發");
+      enableButtons(true);
+      console.log("百岳載入完成：", mountainsRich.length);
+    }catch(err){
+      console.error("載入百岳失敗：", err);
+      setStatus("❌ 百岳資料載入失敗");
+      enableButtons(true); // 讓按鈕還能按，但會提示池沒資料
+      bubble.innerHTML = `🐻 熊熊說：我沒有找到 mountains.rich.json。<br>請確認檔案路徑與名稱正確。<div class="hint">提示：把 JSON 放在同層，檔名要一模一樣。</div>`;
+    }
+  }
+
+  // ========= 難度規則 =========
   const FORCE_ADVANCED = new Set([
     "中央尖山", "南湖大山", "南湖大山東峰", "南湖大山南峰", "南湖北山",
     "大劍山", "大霸尖山", "小霸尖山", "品田山", "劍山", "無明山"
   ]);
 
-  // 2) 強制新手清單（親民/公路型/入門常見）
   const FORCE_BEGINNER = new Set([
     "石門山", "合歡山主峰", "合歡山東峰", "合歡山北峰", "西合歡山"
   ]);
@@ -476,15 +525,13 @@
     if (FORCE_BEGINNER.has(name)) return "beginner";
     if (FORCE_ADVANCED.has(name)) return "advanced";
 
-    // 依海拔做大方向分級（你要更嚴格/更寬鬆都可）
     if (elev >= 3600) return "advanced";
     if (elev >= 3300) return "intermediate";
     return "beginner";
   }
 
-  // ========= 熊熊故事自動生成（每座不同）=========
+  // ========= 熊熊故事自動生成 =========
   function hashToIndex(num, mod) {
-    // 穩定：同一座山每次都會選到同一組句型
     return Math.abs((num * 2654435761) % 4294967296) % mod;
   }
 
@@ -547,38 +594,25 @@
     const i1 = hashToIndex(m.id || 1, 5);
     const i2 = hashToIndex((m.id || 1) + 7, 5);
 
-    // 特例加一點品牌感（你要我再加更多特例也可以）
     let special = "";
     if ((m.name_zh || "").includes("玉山")) special = "（台灣之巔家族）";
     if ((m.name_zh || "") === "雪山") special = "（黑森林與圈谷的傳說）";
 
     return {
       ...m,
-      difficulty: diff, // beginner | intermediate | advanced
+      difficulty: diff,
       bear_story: STORY_TPL[diff][i1]({ ...m, special }),
       bear_advice: "✅ " + ADVICE_TPL[diff][i2](),
       risk_note: inferRiskNote(diff)
     };
   }
 
-  // ========= 抽卡（依難度抽）=========
+  // ========= 抽卡 =========
   function pickByDifficulty(diff) {
     const pool = mountainsRich.filter(x => x.difficulty === diff);
     if (!pool.length) return null;
     return pool[Math.floor(Math.random() * pool.length)];
   }
-
-  // ========= 你原本的 Modal 渲染：我用同樣格式輸出 =========
-  const modalBackdrop = document.getElementById("modalBackdrop");
-  const closeModal = document.getElementById("closeModal");
-  const resultCard = document.getElementById("resultCard");
-  const modalHeadTitle = document.getElementById("modalHeadTitle");
-
-  function openModal(){ modalBackdrop.style.display="flex"; modalBackdrop.setAttribute("aria-hidden","false"); }
-  function hideModal(){ modalBackdrop.style.display="none"; modalBackdrop.setAttribute("aria-hidden","true"); }
-
-  if (closeModal) closeModal.addEventListener("click", hideModal);
-  if (modalBackdrop) modalBackdrop.addEventListener("click", (e)=>{ if(e.target === modalBackdrop) hideModal(); });
 
   const diffLabel = { beginner:"新手友善", intermediate:"需要經驗", advanced:"建議帶隊" };
 
@@ -589,7 +623,7 @@
         <div>
           <h3>${m.name_zh}</h3>
           <div style="margin-top:6px;color:#7a5b6a;font-size:12px;">
-            • ${m.name_en || ""} <br>
+            • ${(m.name_en || "").trim()} <br>
             • 海拔 ${m.elevation_m} m
           </div>
         </div>
@@ -597,7 +631,7 @@
       </div>
 
       <div class="bearline">
-        <div style="font-weight:700;margin-bottom:6px;">出遊熊故事</div>
+        <div style="font-weight:700;margin-bottom:6px;">爬山熊故事</div>
         <div>${m.bear_story}</div>
 
         <div style="font-weight:700;margin:10px 0 6px;">熊熊建議</div>
@@ -609,22 +643,21 @@
     `;
   }
 
-  // ========= 三顆按鈕：依難度抽 =========
-  document.getElementById("btnBeginner")?.addEventListener("click", ()=>{
+  btnBeginner?.addEventListener("click", ()=>{
     const m = pickByDifficulty("beginner");
-    if (!m) return alert("新手百岳池目前沒有資料");
+    if (!m) return alert("新手百岳池目前沒有資料（可能 JSON 未載入或資料未分類）");
     renderMountain(m); openModal();
   });
 
-  document.getElementById("btnIntermediate")?.addEventListener("click", ()=>{
+  btnIntermediate?.addEventListener("click", ()=>{
     const m = pickByDifficulty("intermediate");
-    if (!m) return alert("進階挑戰池目前沒有資料");
+    if (!m) return alert("進階挑戰池目前沒有資料（可能 JSON 未載入或資料未分類）");
     renderMountain(m); openModal();
   });
 
-  document.getElementById("btnAdvanced")?.addEventListener("click", ()=>{
+  btnAdvanced?.addEventListener("click", ()=>{
     const m = pickByDifficulty("advanced");
-    if (!m) return alert("需帶隊池目前沒有資料");
+    if (!m) return alert("需帶隊池目前沒有資料（可能 JSON 未載入或資料未分類）");
     renderMountain(m); openModal();
   });
 
