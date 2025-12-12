@@ -825,8 +825,8 @@ async function loadMountains(){
   try{
     setStatus("⛰️ 載入百岳資料中…");
 
-    // 正確路徑：同層 mountains.rich.json ✅
-    const res = await fetch("./mountains.rich.json", { cache:"no-store" });
+    // 正確路徑：同層 mountains-rich.json ✅
+    const res = await fetch("./mountains-rich.json", { cache:"no-store" });
     if(!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     mountains = Array.isArray(data) ? data : (data.mountains || []);
@@ -847,7 +847,7 @@ async function loadMountains(){
 
   }catch(err){
     console.error(err);
-    setStatus("❌ 載入失敗：請確認 mountains.rich.json 是否同層");
+    setStatus("❌ 載入失敗：請確認 mountains-rich.json 是否同層");
     mountainsRich = [];
     updateProgressUI();
   }
