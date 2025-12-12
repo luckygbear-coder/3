@@ -445,7 +445,7 @@
   let mountainsRich = [];    // 自動補齊故事/難度後的 100 座
 
   async function loadMountains() {
-    const res = await fetch("./mountains.json");
+    const res = await fetch("./mountains.rich.json");
     const data = await res.json();
 
     // 兼容兩種格式：
