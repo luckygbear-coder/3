@@ -825,29 +825,31 @@ async function loadMountains(){
   try{
     setStatus("⛰️ 載入百岳資料中…");
 
-    // 正確路徑：同層 mountains-rich.json ✅
-    const res = await fetch("./mountains-rich.json", { cache:"no-store" });
-    if(!res.ok) throw new Error("HTTP " + res.status);
+    // ✅ 保證同層路徑正確 + 避快取
+    const url = new URL("mountains-rich.json", window.location.href);
+    url.searchParams.set("v", Date.now());
+
+    console.log("fetch url =", url.toString());
+
+    const res = await fetch(url.toString(), { cache:"no-store" });
+    if(!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} | ${url}`);
+
     const data = await res.json();
     mountains = Array.isArray(data) ? data : (data.mountains || []);
-
     mountainsRich = mountains.map(enrichMountain);
 
     setStatus("⛰️ 今日狀態：準備出發");
     updateProgressUI();
 
-    // init journal select + list
     renderMountainList();
     renderJournalMountainOptions();
     setTodayDateIfEmpty();
     renderJournalList();
-
-    // milestone check on load
     checkMilestoneAndCelebrate();
 
   }catch(err){
-    console.error(err);
-    setStatus("❌ 載入失敗：請確認 mountains-rich.json 是否同層");
+    console.error("loadMountains failed:", err);
+    setStatus("❌ 載入失敗：" + (err?.message || err));
     mountainsRich = [];
     updateProgressUI();
   }
