@@ -1,9 +1,10 @@
-/* 出遊熊百岳 - script.js（修正版）
-   - 抽山結果用跳出視窗顯示（Modal）
-   - 抽卡動畫也用 Modal（不依賴 resultPanel）
-   - 修復：openDrawResultModal 放錯位置導致整個 JS 停機
-   - 修復：刪掉 resultPanel 後 fakeDrawAnimation 仍引用造成錯誤
-   - 其餘功能維持：讀取 mountains.json / 清單 / 勾選 / 匯出 / 里程碑 / 急救 / 安裝提示
+/* 出遊熊百岳 - script.js（可直接覆蓋）
+   ✅ 修好按鈕不能按（避免 ReferenceError / selector 綁不到）
+   ✅ 抽山結果 & 抽卡動畫：Modal
+   ✅ 里程碑證書：顯示最近征服山名
+   ✅ 征服 log：STORAGE.conquered
+   ✅ 大頭照：可上傳並套用（點頭像可選照片，或用 input#avatarUpload）
+   ✅ 日記登山紀錄：時間/選山/照片/備註（localStorage）
 */
 
 const STORAGE = {
@@ -15,10 +16,12 @@ const STORAGE = {
   profileAvatar: "bear100_profile_avatar"
 };
 
+const HIKE_KEY = "bear100_hike_logs";
+
 let allMountains = [];
 let currentMountain = null;
 
-// ===== 熊熊小語 =====
+// ===== 熊熊小語（若你已刪掉熊熊說那格，程式也不會壞）=====
 const bearQuotes = [
   "把安全放第一名，你就已經是高手了。",
   "你不是在征服山，你是在學會照顧自己。",
@@ -93,7 +96,6 @@ function normalizeMountain(m, idx){
     risk_note: m.risk_note || m.risk || "⚠️ 注意天候變化與撤退時間。"
   };
 }
-
 async function loadMountains(){
   const res = await fetch("./mountains.json", { cache: "no-store" });
   if(!res.ok) throw new Error("mountains.json 讀取失敗");
@@ -116,9 +118,12 @@ function openModal(title, bodyHtml, footHtml=""){
   modalEl.style.display = "flex";
 }
 function closeModal(){
-  $("#modal").style.display = "none";
-  $("#modalBody").innerHTML = "";
-  $("#modalFoot").innerHTML = "";
+  const modalEl = $("#modal");
+  const bodyEl = $("#modalBody");
+  const footEl = $("#modalFoot");
+  if(modalEl) modalEl.style.display = "none";
+  if(bodyEl) bodyEl.innerHTML = "";
+  if(footEl) footEl.innerHTML = "";
 }
 
 // ===== Toast =====
@@ -182,7 +187,6 @@ function checkMilestone(count){
     openCongratsModal(currentMilestone, total);
   }
 }
-
 function openCongratsModal(m, total){
   const recent = loadArr(STORAGE.conquered).slice(0, 3).map(x=>x.name).filter(Boolean);
   const recentHtml = recent.length
@@ -205,23 +209,29 @@ function openCongratsModal(m, total){
     <button class="btn ghost" id="btnCloseCongrats">關閉</button>
   `);
 
-  $("#btnExportCongrats").onclick = async () => {
+  const exportBtn = $("#btnExportCongrats");
+  const closeBtn = $("#btnCloseCongrats");
+  if(exportBtn) exportBtn.onclick = async () => {
     await exportElementAsImage($("#congratsExport"), `bear-certificate-${m}.png`);
   };
-  $("#btnCloseCongrats").onclick = closeModal;
+  if(closeBtn) closeBtn.onclick = closeModal;
 }
-// ===== bear quote =====
+
+// ===== bear quote（可有可無）=====
 function setRandomQuote(){
+  const el = $("#bearQuote");
+  if(!el) return;
   const q = bearQuotes[Math.floor(Math.random() * bearQuotes.length)];
-  $("#bearQuote").textContent = q;
+  el.textContent = q;
 }
 function enableLongPressCopy(el){
+  if(!el) return;
   let t = null;
   el.addEventListener("touchstart", ()=>{
     t = setTimeout(async ()=>{
       try{
         await navigator.clipboard.writeText(el.textContent.trim());
-        toast("已複製熊熊小語 ✨");
+        toast("已複製小語 ✨");
       }catch(e){
         toast("複製失敗，請手動長按選取");
       }
@@ -240,7 +250,6 @@ function getPoolByDifficulty(diff, collectMode){
   return pool;
 }
 
-// ✅ 抽到結果：跳出視窗（放在外面！不要塞進 drawOne）
 function openDrawResultModal(m){
   const visited = loadSet(STORAGE.visited);
   const isVisited = visited.has(String(m.id));
@@ -277,16 +286,17 @@ function openDrawResultModal(m){
     `
   );
 
-  $("#btnExportDraw").onclick = async () => {
+  const exportBtn = $("#btnExportDraw");
+  const toggleBtn = $("#btnToggleVisitedDraw");
+  if(exportBtn) exportBtn.onclick = async () => {
     await exportElementAsImage(document.getElementById("drawResultCard"), `bear-draw-${m.id}.png`);
   };
-  $("#btnToggleVisitedDraw").onclick = () => {
+  if(toggleBtn) toggleBtn.onclick = () => {
     toggleVisited(m.id);
     closeModal();
   };
 }
 
-// ✅ 抽卡動畫：用 Modal，不要再用 resultPanel
 function fakeDrawAnimationThen(done){
   openModal("🎲 抽籤中…", `
     <div class="mount-card">
@@ -298,7 +308,6 @@ function fakeDrawAnimationThen(done){
       </div>
     </div>
   `);
-
   injectSpinnerCSSOnce();
   setTimeout(()=> done(), 700);
 }
@@ -320,7 +329,8 @@ function injectSpinnerCSSOnce(){
 }
 
 function drawOne(diff){
-  const collectMode = $("#collectMode").checked;
+  const collectEl = $("#collectMode");
+  const collectMode = collectEl ? collectEl.checked : true;
   const pool = getPoolByDifficulty(diff, collectMode);
 
   if(pool.length === 0){
@@ -343,17 +353,21 @@ function drawOne(diff){
 function toggleVisited(id){
   const visited = loadSet(STORAGE.visited);
   const key = String(id);
+
   if(visited.has(key)){
     visited.delete(key);
     toast("已取消勾選");
   }else{
     visited.add(key);
     toast("+1 已征服 ✅");
+
+    // conquered log
     const m = allMountains.find(x => String(x.id) === key);
-const log = loadArr(STORAGE.conquered);
-log.unshift({ ts: nowISO(), id: key, name: m ? m.name : "未知" });
-saveArr(STORAGE.conquered, log.slice(0, 50));
+    const log = loadArr(STORAGE.conquered);
+    log.unshift({ ts: nowISO(), id: key, name: m ? m.name : "未知" });
+    saveArr(STORAGE.conquered, log.slice(0, 50));
   }
+
   saveSet(STORAGE.visited, visited);
   updateProgress();
   renderList();
@@ -454,11 +468,13 @@ function openMountainModal(m){
     <button class="btn ghost" id="btnModalToggle">${isVisited ? "✅ 取消已征服" : "✅ 勾選已征服"}</button>
   `);
 
-  $("#btnModalExport").onclick = async ()=> exportElementAsImage($("#modalCard"), `bear-mountain-${m.id}.png`);
-  $("#btnModalToggle").onclick = ()=> { toggleVisited(m.id); closeModal(); };
+  const exportBtn = $("#btnModalExport");
+  const toggleBtn = $("#btnModalToggle");
+  if(exportBtn) exportBtn.onclick = async ()=> exportElementAsImage($("#modalCard"), `bear-mountain-${m.id}.png`);
+  if(toggleBtn) toggleBtn.onclick = ()=> { toggleVisited(m.id); closeModal(); };
 }
 
-// ===== Diary =====
+// ===== Diary Preview（最近3筆抽卡）=====
 function renderDiaryPreview(){
   const box = $("#diaryPreview");
   if(!box) return;
@@ -478,9 +494,9 @@ function renderDiaryPreview(){
     </div>
   `).join("");
 }
-
 function saveDiary(){
-  const txt = ($("#diaryInput").value || "").trim();
+  const input = $("#diaryInput");
+  const txt = (input?.value || "").trim();
   localStorage.setItem(STORAGE.diary, txt);
   toast("已儲存今日心情 📝");
 }
@@ -507,7 +523,7 @@ async function exportElementAsImage(element, filename){
     a.href = dataUrl;
     a.download = filename;
     a.click();
-    toast("已產生圖片 ✅（可分享到 IG）");
+    toast("已產生圖片 ✅");
   }catch(e){
     console.error(e);
     toast("匯出失敗，請稍後再試");
@@ -548,7 +564,8 @@ async function exportHistoryImage(){
     <button class="btn ghost" onclick="closeModal()">關閉</button>
   `);
 
-  $("#btnDoExportHistory").onclick = async ()=> exportElementAsImage($("#historyExport"), `bear-history-${Date.now()}.png`);
+  const btn = $("#btnDoExportHistory");
+  if(btn) btn.onclick = async ()=> exportElementAsImage($("#historyExport"), `bear-history-${Date.now()}.png`);
 }
 
 // ===== Emergency =====
@@ -609,7 +626,7 @@ function switchPage(name){
     btn.classList.toggle("active", btn.dataset.page === name);
   });
   if(name==="List") renderList();
-  if(name==="Diary") renderDiaryPreview();
+  if(name==="Diary"){ renderDiaryPreview(); renderMountainOptions(); renderHikeList(); }
 }
 
 // ===== Install Prompt =====
@@ -631,7 +648,7 @@ function showInstallHint(){
   const desc = document.getElementById("installDesc");
   const btnInstall = document.getElementById("btnInstall");
   const btnLater = document.getElementById("btnInstallLater");
-  if(!hint || !desc || !btnInstall || !btnLater) return; // ✅ 防呆
+  if(!hint || !desc || !btnInstall || !btnLater) return;
 
   if(isIOS()){
     desc.innerHTML = `點擊 Safari 的 <b>分享</b> 圖示<br>再選「<b>加入主畫面</b>」即可 🐻`;
@@ -663,83 +680,158 @@ window.addEventListener("beforeinstallprompt", (e)=>{
   deferredPrompt = e;
 });
 
-// ===== init =====
-async function init(){
-  // modal close
-  $("#modalClose").onclick = closeModal;
-  $("#modal").addEventListener("click", (e)=>{ if(e.target.id==="modal") closeModal(); });
-  applyAvatar();
-  bindAvatarUpload();
-  // bear quote
-if($("#bearQuote")) {
-  setRandomQuote();
-  enableLongPressCopy($("#bearQuote"));
+// ===== 大頭照（一定要放在 init 之前：避免 not defined）=====
+async function fileToDataUrlCompressed(file, maxW=1024, quality=0.82){
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  await new Promise((res, rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+  const scale = Math.min(1, maxW / img.width);
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, w, h);
+  URL.revokeObjectURL(url);
+
+  return canvas.toDataURL("image/jpeg", quality);
 }
-if($("#bearAvatar") && $("#bearQuote")){
-  $("#bearAvatar").addEventListener("click", ()=> setRandomQuote());
+
+function applyAvatar(){
+  const data = localStorage.getItem(STORAGE.profileAvatar);
+  const img = document.getElementById("bearImg");
+  const fallback = document.getElementById("bearEmoji");
+  if(!img || !fallback) return;
+
+  if(data){
+    img.src = data;
+    img.style.display = "block";
+    fallback.style.display = "none";
+  }
 }
-  // buttons
-$$(".route-tile").forEach(btn=> btn.addEventListener("click", ()=> drawOne(btn.dataset.diff)));  
-  $("#btnOpenHistory").addEventListener("click", ()=> openHistoryModal());
-  $("#btnCall119").addEventListener("click", callEmergency);
-  $("#btnFirstAid").addEventListener("click", firstAidGuide);
 
-  // list filters
-  $("#searchBox").addEventListener("input", ()=> renderList());
-  $("#filterDiff").addEventListener("change", ()=> renderList());
+function bindAvatarUpload(){
+  const up = document.getElementById("avatarUpload");      // 你要在 HTML 放 <input id="avatarUpload" type="file" accept="image/*" hidden>
+  const avatarBtn = document.getElementById("bearAvatar"); // 點頭像開啟選檔
+  if(avatarBtn && up){
+    avatarBtn.addEventListener("click", ()=> up.click());
+  }
+  if(!up) return;
 
-  // diary
-  $("#btnSaveDiary").addEventListener("click", saveDiary);
-  $("#btnExportHistory").addEventListener("click", exportHistoryImage);
-
-  // settings reset
-  $("#btnReset").addEventListener("click", ()=>{
-    openModal("🧹 清除本機資料", `
-      <div class="muted">確定要清除進度與抽卡紀錄嗎？</div>
-      <div class="muted small" style="margin-top:8px;">（只影響本機，不影響 GitHub 檔案）</div>
-    `, `
-      <button class="btn danger" id="btnDoReset">清除</button>
-      <button class="btn ghost" onclick="closeModal()">取消</button>
-    `);
-    $("#btnDoReset").onclick = ()=>{
-      localStorage.removeItem(STORAGE.visited);
-      localStorage.removeItem(STORAGE.history);
-      localStorage.removeItem(STORAGE.diary);
-      localStorage.removeItem(STORAGE.milestone);
-      currentMountain = null;
-      updateProgress();
-      renderList();
-      renderDiaryPreview();
-      closeModal();
-      toast("已清除 ✅");
-    };
+  up.addEventListener("change", async ()=>{
+    const f = up.files?.[0];
+    if(!f) return;
+    try{
+      const data = await fileToDataUrlCompressed(f, 640, 0.85);
+      localStorage.setItem(STORAGE.profileAvatar, data);
+      applyAvatar();
+      toast("已更新大頭照 ✅");
+    }catch(e){
+      console.error(e);
+      toast("大頭照更新失敗");
+    }
   });
+}
 
-  // bottom nav
-  $$(".nav-item").forEach(btn=> btn.addEventListener("click", ()=> switchPage(btn.dataset.page)));
+// ===== 登山日記：時間/選山/照片/備註 =====
+function loadHikes(){ return loadArr(HIKE_KEY); }
+function saveHikes(arr){ saveArr(HIKE_KEY, arr); }
 
-  // load mountains
-  try{
-    await loadMountains();
-  }catch(e){
-    console.error(e);
-    openModal("mountains.json 讀取失敗", `
-      <div class="muted">請確認根目錄有 <b>mountains.json</b>，且內容為 JSON。</div>
-      <div class="muted small" style="margin-top:8px;">GitHub Pages 路徑大小寫要一致：<b>mountains.json</b></div>
-    `, `<button class="btn ghost" onclick="closeModal()">知道了</button>`);
+function renderMountainOptions(){
+  const sel = $("#hikeMountain");
+  if(!sel) return;
+  sel.innerHTML =
+    `<option value="">請選擇山</option>` +
+    allMountains.map(m =>
+      `<option value="${m.id}">${escapeHtml(m.name)}${m.elevation_m ? `（${m.elevation_m}m）` : ""}</option>`
+    ).join("");
+}
+
+function renderHikeList(){
+  const box = $("#hikeList");
+  if(!box) return;
+  const arr = loadHikes().slice(0, 8);
+  if(arr.length===0){
+    box.innerHTML = `<div class="muted">還沒有登山紀錄喔。</div>`;
+    return;
+  }
+  box.innerHTML = arr.map(h=>`
+    <div class="mini-card">
+      <div style="font-weight:1000;">⛰️ ${escapeHtml(h.mountainName)} <span class="muted small">（${escapeHtml(h.time)}）</span></div>
+      ${h.photo ? `<img src="${h.photo}" class="photo-preview" style="display:block;margin-top:10px;">` : ``}
+      ${h.note ? `<div style="margin-top:8px;font-size:13px;line-height:1.55;">📝 ${escapeHtml(h.note)}</div>` : ``}
+    </div>
+  `).join("");
+}
+
+function bindDiaryForm(){
+  const timeEl = $("#hikeTime");
+  const selEl  = $("#hikeMountain");
+  const fileEl = $("#hikePhoto");
+  const noteEl = $("#hikeNote");
+  const prevEl = $("#hikePreview");
+  const saveBtn = $("#btnSaveHike");
+  if(!timeEl || !selEl || !fileEl || !noteEl || !saveBtn) return;
+
+  if(!timeEl.value){
+    const d = new Date();
+    const pad = n => String(n).padStart(2,"0");
+    timeEl.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  updateProgress();
-  renderList();
-  renderDiaryPreview();
-  switchPage("Draw");
-  renderMountainOptions();
-  bindDiaryForm();
-  renderHikeList();
-  // ✅ 安裝提示延後，且保證 DOM 都準備好了
-  setTimeout(showInstallHint, 1500);
+  let photoData = "";
+
+  fileEl.addEventListener("change", async ()=>{
+    const f = fileEl.files?.[0];
+    if(!f) return;
+    try{
+      photoData = await fileToDataUrlCompressed(f, 1024, 0.82);
+      if(prevEl){
+        prevEl.src = photoData;
+        prevEl.style.display = "block";
+      }
+    }catch(e){
+      console.error(e);
+      toast("照片讀取失敗");
+    }
+  });
+
+  saveBtn.addEventListener("click", ()=>{
+    const mountainId = selEl.value;
+    if(!mountainId){
+      toast("請先選擇山名");
+      return;
+    }
+    const m = allMountains.find(x => String(x.id) === String(mountainId));
+    const time = timeEl.value ? timeEl.value.replace("T"," ") : nowISO();
+    const note = (noteEl.value || "").trim();
+
+    const arr = loadHikes();
+    arr.unshift({
+      time,
+      mountainId,
+      mountainName: m ? m.name : "未知",
+      note,
+      photo: photoData
+    });
+    saveHikes(arr.slice(0, 30));
+
+    // 同步：存登山紀錄就勾已征服
+    toggleVisited(mountainId);
+
+    // reset
+    noteEl.value = "";
+    fileEl.value = "";
+    photoData = "";
+    if(prevEl){ prevEl.style.display="none"; prevEl.src=""; }
+
+    toast("已儲存登山紀錄 ✅");
+    renderHikeList();
+  });
 }
 
+// ===== 抽卡紀錄 modal =====
 function openHistoryModal(){
   const arr = loadArr(STORAGE.history);
   if(arr.length===0){
@@ -767,153 +859,118 @@ function openHistoryModal(){
     <button class="btn ghost" onclick="closeModal()">關閉</button>
   `);
 
-  $("#btnExportHistoryFromModal").onclick = exportHistoryImage;
-}
-const HIKE_KEY = "bear100_hike_logs";
-
-function loadHikes(){
-  return loadArr(HIKE_KEY);
-}
-function saveHikes(arr){
-  saveArr(HIKE_KEY, arr);
+  const btn = $("#btnExportHistoryFromModal");
+  if(btn) btn.onclick = exportHistoryImage;
 }
 
-function renderMountainOptions(){
-  const sel = $("#hikeMountain");
-  if(!sel) return;
-  sel.innerHTML = `<option value="">請選擇山</option>` + allMountains.map(m =>
-    `<option value="${m.id}">${escapeHtml(m.name)}${m.elevation_m ? `（${m.elevation_m}m）` : ""}</option>`
-  ).join("");
-}
+// ===== init =====
+async function init(){
+  // modal close
+  const closeBtn = $("#modalClose");
+  if(closeBtn) closeBtn.onclick = closeModal;
 
-function renderHikeList(){
-  const box = $("#hikeList");
-  if(!box) return;
-  const arr = loadHikes().slice(0, 8);
-  if(arr.length===0){
-    box.innerHTML = `<div class="muted">還沒有登山紀錄喔。</div>`;
-    return;
-  }
-  box.innerHTML = arr.map(h=>`
-    <div class="mini-card">
-      <div style="font-weight:1000;">⛰️ ${escapeHtml(h.mountainName)} <span class="muted small">（${escapeHtml(h.time)}）</span></div>
-      ${h.photo ? `<img src="${h.photo}" class="photo-preview" style="display:block;margin-top:10px;">` : ``}
-      ${h.note ? `<div style="margin-top:8px;font-size:13px;line-height:1.55;">📝 ${escapeHtml(h.note)}</div>` : ``}
-    </div>
-  `).join("");
-}
-
-// 簡單壓縮圖片（避免 localStorage 太快爆）
-async function fileToDataUrlCompressed(file, maxW=1024, quality=0.82){
-  const img = new Image();
-  const url = URL.createObjectURL(file);
-  await new Promise((res, rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
-  const scale = Math.min(1, maxW / img.width);
-  const w = Math.round(img.width * scale);
-  const h = Math.round(img.height * scale);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0, w, h);
-  URL.revokeObjectURL(url);
-
-  return canvas.toDataURL("image/jpeg", quality);
-}
-
-function bindDiaryForm(){
-  const timeEl = $("#hikeTime");
-  const selEl  = $("#hikeMountain");
-  const fileEl = $("#hikePhoto");
-  const noteEl = $("#hikeNote");
-  const prevEl = $("#hikePreview");
-  const saveBtn = $("#btnSaveHike");
-  if(!timeEl || !selEl || !fileEl || !noteEl || !saveBtn) return;
-
-  // 預設時間：現在
-  if(!timeEl.value){
-    const d = new Date();
-    const pad = n => String(n).padStart(2,"0");
-    timeEl.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const modalEl = $("#modal");
+  if(modalEl){
+    modalEl.addEventListener("click", (e)=>{ if(e.target.id==="modal") closeModal(); });
   }
 
-  let photoData = "";
+  // avatar
+  applyAvatar();
+  bindAvatarUpload();
 
-  fileEl.addEventListener("change", async ()=>{
-    const f = fileEl.files?.[0];
-    if(!f) return;
-    try{
-      photoData = await fileToDataUrlCompressed(f);
-      prevEl.src = photoData;
-      prevEl.style.display = "block";
-    }catch(e){
-      console.error(e);
-      toast("照片讀取失敗");
-    }
+  // bear quote（可有可無）
+  setRandomQuote();
+  enableLongPressCopy($("#bearQuote"));
+
+  // ✅ 抽山按鈕：同時支援 .route-card（舊）與 .route-tile（新方格）
+  const drawBtns = [...$$(".route-card"), ...$$(".route-tile")];
+  drawBtns.forEach(btn=>{
+    btn.addEventListener("click", ()=> drawOne(btn.dataset.diff));
   });
-function applyAvatar(){
-  const data = localStorage.getItem(STORAGE.profileAvatar);
-  const img = document.getElementById("bearImg");
-  const fallback = document.getElementById("bearEmoji");
-  if(!img || !fallback) return;
 
-  if(data){
-    img.src = data;
-    img.style.display = "block";
-    fallback.style.display = "none";
-  }
-}
+  // 其他按鈕（全部防呆）
+  const btnDrawAny = $("#btnDrawAny");
+  if(btnDrawAny) btnDrawAny.addEventListener("click", ()=> drawOne("any"));
 
-function bindAvatarUpload(){
-  const up = document.getElementById("avatarUpload");
-  if(!up) return;
-  up.addEventListener("change", async ()=>{
-    const f = up.files?.[0];
-    if(!f) return;
-    try{
-      const data = await fileToDataUrlCompressed(f, 640, 0.85);
-      localStorage.setItem(STORAGE.profileAvatar, data);
-      applyAvatar();
-      toast("已更新大頭照 ✅");
-    }catch(e){
-      console.error(e);
-      toast("大頭照更新失敗");
-    }
-  });
-}
-  saveBtn.addEventListener("click", async ()=>{
-    const mountainId = selEl.value;
-    if(!mountainId){
-      toast("請先選擇山名");
-      return;
-    }
-    const m = allMountains.find(x => String(x.id) === String(mountainId));
-    const time = timeEl.value ? timeEl.value.replace("T"," ") : nowISO();
-    const note = (noteEl.value || "").trim();
+  const btnOpenHistory = $("#btnOpenHistory");
+  if(btnOpenHistory) btnOpenHistory.addEventListener("click", openHistoryModal);
 
-    const arr = loadHikes();
-    arr.unshift({
-      time,
-      mountainId,
-      mountainName: m ? m.name : "未知",
-      note,
-      photo: photoData
+  const btnCall = $("#btnCall119");
+  if(btnCall) btnCall.addEventListener("click", callEmergency);
+
+  const btnAid = $("#btnFirstAid");
+  if(btnAid) btnAid.addEventListener("click", firstAidGuide);
+
+  const searchBox = $("#searchBox");
+  if(searchBox) searchBox.addEventListener("input", renderList);
+
+  const filterDiff = $("#filterDiff");
+  if(filterDiff) filterDiff.addEventListener("change", renderList);
+
+  const btnSaveDiary = $("#btnSaveDiary");
+  if(btnSaveDiary) btnSaveDiary.addEventListener("click", saveDiary);
+
+  const btnExportHistory = $("#btnExportHistory");
+  if(btnExportHistory) btnExportHistory.addEventListener("click", exportHistoryImage);
+
+  const btnReset = $("#btnReset");
+  if(btnReset){
+    btnReset.addEventListener("click", ()=>{
+      openModal("🧹 清除本機資料", `
+        <div class="muted">確定要清除進度與抽卡紀錄嗎？</div>
+        <div class="muted small" style="margin-top:8px;">（只影響本機，不影響你的 GitHub 檔案）</div>
+      `, `
+        <button class="btn danger" id="btnDoReset">清除</button>
+        <button class="btn ghost" onclick="closeModal()">取消</button>
+      `);
+
+      const doBtn = $("#btnDoReset");
+      if(doBtn) doBtn.onclick = ()=>{
+        localStorage.removeItem(STORAGE.visited);
+        localStorage.removeItem(STORAGE.history);
+        localStorage.removeItem(STORAGE.diary);
+        localStorage.removeItem(STORAGE.milestone);
+        localStorage.removeItem(STORAGE.conquered);
+        localStorage.removeItem(STORAGE.profileAvatar);
+        currentMountain = null;
+        updateProgress();
+        renderList();
+        renderDiaryPreview();
+        renderHikeList();
+        closeModal();
+        toast("已清除 ✅");
+      };
     });
+  }
 
-    // 最多留 30 筆（照片會佔空間）
-    saveHikes(arr.slice(0, 30));
+  // bottom nav
+  $$(".nav-item").forEach(btn=> btn.addEventListener("click", ()=> switchPage(btn.dataset.page)));
 
-    // 同步：儲存登山紀錄時，順便勾成已去過
-    toggleVisited(mountainId);
+  // load mountains
+  try{
+    await loadMountains();
+  }catch(e){
+    console.error(e);
+    openModal("mountains.json 讀取失敗", `
+      <div class="muted">請確認根目錄有 <b>mountains.json</b>，且內容為 JSON。</div>
+      <div class="muted small" style="margin-top:8px;">GitHub Pages 路徑大小寫要一致：<b>mountains.json</b></div>
+    `, `<button class="btn ghost" onclick="closeModal()">知道了</button>`);
+  }
 
-    // reset
-    noteEl.value = "";
-    fileEl.value = "";
-    photoData = "";
-    if(prevEl){ prevEl.style.display="none"; prevEl.src=""; }
+  updateProgress();
+  renderList();
+  renderDiaryPreview();
 
-    toast("已儲存登山紀錄 ✅");
-    renderHikeList();
-  });
+  // diary form
+  renderMountainOptions();
+  bindDiaryForm();
+  renderHikeList();
+
+  // default page
+  switchPage("Draw");
+
+  // install hint
+  setTimeout(showInstallHint, 1500);
 }
+
 document.addEventListener("DOMContentLoaded", init);
