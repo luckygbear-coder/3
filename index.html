@@ -5,254 +5,211 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>出遊熊百岳｜抽山集卡</title>
 
-  <!-- PWA (你若已有 webmanifest，就直接沿用檔名即可) -->
+  <!-- PWA -->
   <link rel="manifest" href="./travel-manifest.webmanifest">
   <meta name="theme-color" content="#f4a63a">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
 
   <link rel="stylesheet" href="./style.css" />
 </head>
+
 <body>
-  <div class="app-wrap">
+<div class="app-wrap">
 
-    <!-- Header -->
-    <header class="topbar card">
-      <div class="avatar" id="bearAvatar" title="點我換一句熊熊小語">
-        <!-- 可放 Images/bear.png（可選），沒放就用 emoji -->
-        <img id="bearImg" src="./images/bear.png" alt="熊熊" onerror="this.style.display='none'; document.getElementById('bearEmoji').style.display='grid';">
-        <div id="bearEmoji" class="avatar-fallback" style="display:none;">🐻</div>
+  <!-- ===== Header ===== -->
+  <header class="topbar card">
+    <div class="avatar" id="bearAvatar">
+      <img id="bearImg"
+           src="./images/bear.png"
+           alt="熊熊"
+           onerror="this.style.display='none'; document.getElementById('bearEmoji').style.display='grid';">
+      <div id="bearEmoji" class="avatar-fallback" style="display:none;">🐻</div>
+    </div>
+
+    <div class="topbar-main">
+      <div class="title">出遊熊百岳</div>
+      <div class="sub">
+        <span class="pill">⛰️ 今日狀態：準備出發</span>
+        <span class="pill ok" id="progressPill">登山進度：已征服 0 座（0/100）</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Pages ===== -->
+  <main class="pages">
+
+    <!-- ===== 抽山 ===== -->
+    <section class="page" id="pageDraw">
+      <div class="card">
+        <div class="h2">今天想挑戰哪種路線？</div>
+
+        <label class="toggle">
+          <input type="checkbox" id="collectMode" checked />
+          <span>集卡模式（征服後不再抽）</span>
+        </label>
+
+        <!-- 方形橫排 -->
+        <div class="route-grid">
+          <button class="route-tile" data-diff="beginner">
+            <div class="tile-ico">🎒</div>
+            <div class="tile-title">新手</div>
+            <div class="tile-sub">慢慢走也很棒</div>
+          </button>
+
+          <button class="route-tile" data-diff="intermediate">
+            <div class="tile-ico">🥾</div>
+            <div class="tile-title">進階</div>
+            <div class="tile-sub">準備更重要</div>
+          </button>
+
+          <button class="route-tile warn" data-diff="advanced">
+            <div class="tile-ico">⚠️</div>
+            <div class="tile-title">需帶隊</div>
+            <div class="tile-sub">曝險較高</div>
+          </button>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn ghost" id="btnOpenHistory">📜 抽卡紀錄</button>
+          <button class="btn primary" id="btnDrawAny">🎲 出遊熊幫我選</button>
+        </div>
+
+        <div class="safe-strip">
+          ⚠️ 高山不是遊樂場，能平安回家才是最棒的冒險 🐻
+        </div>
       </div>
 
-      <div class="topbar-main">
-        <div class="title">出遊熊百岳</div>
-        <div class="sub">
-          <span class="pill" id="todayStatus">⛰️ 今日狀態：準備出發</span>
-<span class="pill ok" id="progressPill">登山進度：已征服 0 座（0/100）</span>        </div>
+      <!-- 緊急 -->
+      <section class="card emergency-card">
+        <div class="h2">緊急狀況</div>
+        <div class="em-row">
+          <button class="btn danger" id="btnCall119">📞 山難求助電話</button>
+          <button class="btn" id="btnFirstAid">🩹 急救教學</button>
+        </div>
+        <div class="muted small">
+          若可撥通：119（消防）或 112（手機緊急）
+        </div>
+      </section>
+    </section>
+
+    <!-- ===== 百岳 ===== -->
+    <section class="page" id="pageList" style="display:none;">
+      <div class="card">
+        <div class="row between">
+          <div class="h2">百岳清單</div>
+          <div class="muted small">可勾選已征服</div>
+        </div>
+
+        <div class="list-tools">
+          <input class="search" id="searchBox" placeholder="搜尋山名" />
+          <select class="select" id="filterDiff">
+            <option value="all">全部</option>
+            <option value="beginner">新手</option>
+            <option value="intermediate">進階</option>
+            <option value="advanced">需帶隊</option>
+          </select>
+        </div>
+
+        <div id="mountList" class="mount-list">
+          <div class="muted">載入中...</div>
+        </div>
       </div>
-    </header>
+    </section>
 
+    <!-- ===== 日記 ===== -->
+    <section class="page" id="pageDiary" style="display:none;">
+      <div class="card">
+        <div class="h2">登山日記</div>
+        <div class="muted small">選時間、選山、上傳照片 🐻</div>
 
+        <label class="label">日期時間</label>
+        <input class="input" type="datetime-local" id="hikeTime" />
 
+        <label class="label">山名</label>
+        <select class="select full" id="hikeMountain">
+          <option value="">載入中...</option>
+        </select>
 
+        <label class="label">照片</label>
+        <input class="input" type="file" id="hikePhoto" accept="image/*" />
+        <img id="hikePreview" class="photo-preview" style="display:none;" />
 
-    <!-- Pages -->
-    <main class="pages">
+        <label class="label">紀錄</label>
+        <textarea class="textarea" id="hikeNote"
+          placeholder="例如：今天慢慢走，但我照顧好自己。"></textarea>
 
-      <!-- Page: 抽山 -->
-      <section class="page" id="pageDraw">
-        <div class="card">
-          <div class="h2">今天想挑戰哪種路線？</div>
+        <div class="btn-row">
+          <button class="btn primary" id="btnSaveHike">💾 儲存</button>
+          <button class="btn ghost" id="btnExportHistory">📸 匯出抽卡紀錄圖</button>
+        </div>
 
-          <label class="toggle">
-            <input type="checkbox" id="collectMode" checked />
-            <span>集卡模式（征服後不再抽）</span>
-          </label>
+        <div class="h3">最近登山紀錄</div>
+        <div id="hikeList" class="history-mini"></div>
+      </div>
+    </section>
 
-    <div class="route-grid">
-  <button class="route-tile" data-diff="beginner">
-    <div class="tile-ico">🎒</div>
-    <div class="tile-title">新手</div>
-    <div class="tile-sub">慢慢走也很棒</div>
-  </button>
+    <!-- ===== 設定 ===== -->
+    <section class="page" id="pageSettings" style="display:none;">
+      <div class="card">
+        <div class="h2">設定</div>
 
-  <button class="route-tile" data-diff="intermediate">
-    <div class="tile-ico">🥾</div>
-    <div class="tile-title">進階</div>
-    <div class="tile-sub">準備更重要</div>
-  </button>
+        <div class="h3">大頭照</div>
+        <input class="input" type="file" id="avatarUpload" accept="image/*" />
+        <div class="muted small">僅存在你的手機本機</div>
 
-  <button class="route-tile warn" data-diff="advanced">
-    <div class="tile-ico">⚠️</div>
-    <div class="tile-title">需帶隊</div>
-    <div class="tile-sub">曝險較高</div>
-  </button>
+        <div class="settings">
+          <button class="btn ghost" id="btnReset">🧹 清除本機資料</button>
+        </div>
+
+        <div class="divider"></div>
+        <div class="muted small">IG：@luckygbear</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== Bottom Nav ===== -->
+  <nav class="bottom-nav card">
+    <button class="nav-item active" data-page="Draw">
+      <div class="nav-ico">🧧</div><div class="nav-txt">抽山</div>
+    </button>
+    <button class="nav-item" data-page="List">
+      <div class="nav-ico">🏔️</div><div class="nav-txt">百岳</div>
+    </button>
+    <button class="nav-item" data-page="Diary">
+      <div class="nav-ico">📒</div><div class="nav-txt">日記</div>
+    </button>
+    <button class="nav-item" data-page="Settings">
+      <div class="nav-ico">⚙️</div><div class="nav-txt">設定</div>
+    </button>
+  </nav>
 </div>
 
-          <div class="btn-row">
-            <button class="btn ghost" id="btnOpenHistory">📜 抽卡紀錄</button>
-            <button class="btn primary" id="btnDrawAny">🎲 出遊熊幫我選</button>
-          </div>
-
-          <div class="safe-strip">
-            ⚠️ 高山不是遊樂場，能平安回家才是最棒的冒險 🐻
-          </div>
-        </div>
-
-        <!-- Result card -->
-
-
-        <!-- Emergency card -->
-        <section class="card emergency-card">
-          <div class="h2">緊急狀況</div>
-          <div class="em-row">
-            <button class="btn danger" id="btnCall119">📞 山難求助電話</button>
-            <button class="btn" id="btnFirstAid">🩹 急救教學</button>
-          </div>
-          <div class="muted small">
-            提醒：若可撥通，<b>119</b>（消防／救護）與 <b>112</b>（手機緊急）通常是優先選擇。
-          </div>
-        </section>
-      </section>
-
-      <!-- Page: 百岳 -->
-      <section class="page" id="pageList" style="display:none;">
-        <div class="card">
-          <div class="row between">
-            <div class="h2">百岳清單</div>
-            <div class="muted small" id="listHint">可勾選已征服（集卡模式會排除）</div>
-          </div>
-
-          <div class="list-tools">
-            <input class="search" id="searchBox" placeholder="搜尋山名（例如：玉山、合歡）" />
-            <select class="select" id="filterDiff">
-              <option value="all">全部難度</option>
-              <option value="beginner">新手</option>
-              <option value="intermediate">進階</option>
-              <option value="advanced">需帶隊</option>
-            </select>
-          </div>
-
-          <div id="mountList" class="mount-list">
-            <div class="muted">載入中...</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Page: 日記 -->
-<section class="page" id="pageDiary" style="display:none;">
-  <div class="card">
-    <div class="h2">登山日記</div>
-    <div class="muted small">選時間、選山、上傳照片，留下你的登山紀錄 🐻</div>
-
-    <div class="form">
-      <label class="label">日期時間</label>
-      <input class="input" type="datetime-local" id="hikeTime" />
-
-      <label class="label">山名</label>
-      <select class="select full" id="hikeMountain">
-        <option value="">載入中...</option>
-      </select>
-
-      <label class="label">照片</label>
-      <input class="input" type="file" id="hikePhoto" accept="image/*" />
-      <img id="hikePreview" class="photo-preview" style="display:none;" />
-
-      <label class="label">紀錄</label>
-      <textarea class="textarea" id="hikeNote" placeholder="例如：今天走得慢，但我照顧好自己。"></textarea>
-
-      <div class="btn-row">
-        <button class="btn primary" id="btnSaveHike">💾 儲存登山紀錄</button>
-        <button class="btn ghost" id="btnExportHistory">📸 匯出抽卡紀錄圖</button>
-      </div>
+<!-- ===== Modal ===== -->
+<div class="modal" id="modal">
+  <div class="modal-sheet card">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">標題</div>
+      <button class="btn mini ghost" id="modalClose">關閉</button>
     </div>
-
-    <div class="h3">最近登山紀錄</div>
-    <div id="hikeList" class="history-mini"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
   </div>
-</section>
+</div>
 
-      <!-- Page: 設定 -->
-      <section class="page" id="pageSettings" style="display:none;">
-        <div class="card">
-          <div class="h2">設定</div>
-          <div class="h3" style="margin-top:10px;">大頭照</div>
-          <input class="input" type="file" id="avatarUpload" accept="image/*" />
-          <div class="muted small">上傳後會存在你的手機本機（不會上傳到伺服器）。</div>
-          <div class="settings">
-            <button class="btn ghost" id="btnReset">🧹 清除本機資料（進度/紀錄）</button>
-            <div class="muted small">
-              （只會清除你的手機本機 localStorage，不會影響 GitHub 上的檔案。）
-            </div>
-          </div>
-
-          <div class="divider"></div>
-          <div class="muted small">
-            IG：<b>@luckygbear</b>（匯出圖可自行貼到 IG 分享）
-          </div>
-        </div>
-      </section>
-
-    </main>
-
-    <!-- Bottom nav -->
-    <nav class="bottom-nav card">
-      <button class="nav-item active" data-page="Draw">
-        <div class="nav-ico">🧧</div><div class="nav-txt">抽山</div>
-      </button>
-      <button class="nav-item" data-page="List">
-        <div class="nav-ico">🏔️</div><div class="nav-txt">百岳</div>
-      </button>
-      <button class="nav-item" data-page="Diary">
-        <div class="nav-ico">📒</div><div class="nav-txt">日記</div>
-      </button>
-      <button class="nav-item" data-page="Settings">
-        <div class="nav-ico">⚙️</div><div class="nav-txt">設定</div>
-      </button>
-    </nav>
-  </div>
-
-  <!-- MODALS -->
-  <div class="modal" id="modal">
-    <div class="modal-sheet card">
-      <div class="modal-head">
-        <div class="modal-title" id="modalTitle">標題</div>
-        <button class="btn mini ghost" id="modalClose">關閉</button>
-      </div>
-      <div class="modal-body" id="modalBody"></div>
-      <div class="modal-foot" id="modalFoot"></div>
-    </div>
-  </div>
-
-  <script src="./script.js"></script>
-<!-- Install Prompt -->
+<!-- ===== Install Prompt ===== -->
 <div class="install-hint" id="installHint" style="display:none;">
   <div class="install-card">
     <div class="install-title">🐻 把出遊熊加到主畫面</div>
-    <div class="install-desc" id="installDesc">
-      像 App 一樣使用，不怕找不到 🧡
-    </div>
-
+    <div class="install-desc" id="installDesc">像 App 一樣使用 🧡</div>
     <div class="install-actions">
       <button class="btn primary" id="btnInstall">加入主畫面</button>
       <button class="btn ghost" id="btnInstallLater">稍後</button>
     </div>
   </div>
 </div>
-const PROFILE_KEY = "bear100_profile_avatar";
 
-async function setAvatarFromFile(file){
-  const data = await fileToDataUrlCompressed(file, 640, 0.85);
-  localStorage.setItem(PROFILE_KEY, data);
-  applyAvatar();
-}
-
-function applyAvatar(){
-  const data = localStorage.getItem(PROFILE_KEY);
-  const img = document.getElementById("bearImg");
-  const fallback = document.getElementById("bearEmoji");
-  if(!img || !fallback) return;
-
-  if(data){
-    img.src = data;
-    img.style.display = "block";
-    fallback.style.display = "none";
-  }
-}
-
-function bindAvatarUpload(){
-  const up = document.getElementById("avatarUpload");
-  if(!up) return;
-  up.addEventListener("change", async ()=>{
-    const f = up.files?.[0];
-    if(!f) return;
-    try{
-      await setAvatarFromFile(f);
-      toast("已更新大頭照 ✅");
-    }catch(e){
-      console.error(e);
-      toast("大頭照更新失敗");
-    }
-  });
-}
+<!-- ✅ 只留這一行 JS -->
+<script src="./script.js"></script>
 </body>
 </html>
