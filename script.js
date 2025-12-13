@@ -708,7 +708,10 @@ if($("#bearAvatar") && $("#bearQuote")){
   renderList();
   renderDiaryPreview();
   switchPage("Draw");
-
+if(name==="Diary") {
+  renderMountainOptions();
+  renderHikeList();
+}
   // ✅ 安裝提示延後，且保證 DOM 都準備好了
   setTimeout(showInstallHint, 1500);
 }
@@ -742,5 +745,122 @@ function openHistoryModal(){
 
   $("#btnExportHistoryFromModal").onclick = exportHistoryImage;
 }
+const HIKE_KEY = "bear100_hike_logs";
 
+function loadHikes(){
+  return loadArr(HIKE_KEY);
+}
+function saveHikes(arr){
+  saveArr(HIKE_KEY, arr);
+}
+
+function renderMountainOptions(){
+  const sel = $("#hikeMountain");
+  if(!sel) return;
+  sel.innerHTML = `<option value="">請選擇山</option>` + allMountains.map(m =>
+    `<option value="${m.id}">${escapeHtml(m.name)}${m.elevation_m ? `（${m.elevation_m}m）` : ""}</option>`
+  ).join("");
+}
+
+function renderHikeList(){
+  const box = $("#hikeList");
+  if(!box) return;
+  const arr = loadHikes().slice(0, 8);
+  if(arr.length===0){
+    box.innerHTML = `<div class="muted">還沒有登山紀錄喔。</div>`;
+    return;
+  }
+  box.innerHTML = arr.map(h=>`
+    <div class="mini-card">
+      <div style="font-weight:1000;">⛰️ ${escapeHtml(h.mountainName)} <span class="muted small">（${escapeHtml(h.time)}）</span></div>
+      ${h.photo ? `<img src="${h.photo}" class="photo-preview" style="display:block;margin-top:10px;">` : ``}
+      ${h.note ? `<div style="margin-top:8px;font-size:13px;line-height:1.55;">📝 ${escapeHtml(h.note)}</div>` : ``}
+    </div>
+  `).join("");
+}
+
+// 簡單壓縮圖片（避免 localStorage 太快爆）
+async function fileToDataUrlCompressed(file, maxW=1024, quality=0.82){
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  await new Promise((res, rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+  const scale = Math.min(1, maxW / img.width);
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, w, h);
+  URL.revokeObjectURL(url);
+
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
+function bindDiaryForm(){
+  const timeEl = $("#hikeTime");
+  const selEl  = $("#hikeMountain");
+  const fileEl = $("#hikePhoto");
+  const noteEl = $("#hikeNote");
+  const prevEl = $("#hikePreview");
+  const saveBtn = $("#btnSaveHike");
+  if(!timeEl || !selEl || !fileEl || !noteEl || !saveBtn) return;
+
+  // 預設時間：現在
+  if(!timeEl.value){
+    const d = new Date();
+    const pad = n => String(n).padStart(2,"0");
+    timeEl.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  let photoData = "";
+
+  fileEl.addEventListener("change", async ()=>{
+    const f = fileEl.files?.[0];
+    if(!f) return;
+    try{
+      photoData = await fileToDataUrlCompressed(f);
+      prevEl.src = photoData;
+      prevEl.style.display = "block";
+    }catch(e){
+      console.error(e);
+      toast("照片讀取失敗");
+    }
+  });
+
+  saveBtn.addEventListener("click", async ()=>{
+    const mountainId = selEl.value;
+    if(!mountainId){
+      toast("請先選擇山名");
+      return;
+    }
+    const m = allMountains.find(x => String(x.id) === String(mountainId));
+    const time = timeEl.value ? timeEl.value.replace("T"," ") : nowISO();
+    const note = (noteEl.value || "").trim();
+
+    const arr = loadHikes();
+    arr.unshift({
+      time,
+      mountainId,
+      mountainName: m ? m.name : "未知",
+      note,
+      photo: photoData
+    });
+
+    // 最多留 30 筆（照片會佔空間）
+    saveHikes(arr.slice(0, 30));
+
+    // 同步：儲存登山紀錄時，順便勾成已去過
+    toggleVisited(mountainId);
+
+    // reset
+    noteEl.value = "";
+    fileEl.value = "";
+    photoData = "";
+    if(prevEl){ prevEl.style.display="none"; prevEl.src=""; }
+
+    toast("已儲存登山紀錄 ✅");
+    renderHikeList();
+  });
+}
 document.addEventListener("DOMContentLoaded", init);
