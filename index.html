@@ -16,42 +16,35 @@
 
 <div class="app">
 
-  <!-- 可捲動內容區 -->
-  <main class="content" id="content">
+  <!-- ========== 抽山頁 ========== -->
+  <main class="content page" id="pageDraw">
 
-    <!-- Header -->
     <header class="header">
       <div class="bear">
-        <!-- 你的熊熊圖：請放在 /images/bear.png -->
         <img src="./images/bear.png" alt="登山熊" />
       </div>
-
       <div class="header-info">
         <div class="status">⛰️ 今日狀態：<span id="todayStatus">準備出發</span></div>
         <div class="progress-text">✅ <span id="progressCount">0</span> / 100</div>
       </div>
     </header>
 
-    <!-- Progress -->
     <section class="card">
       <div class="row">
         <h3>登山進度</h3>
         <div class="muted"><span id="progressCount2">0</span> / 100</div>
       </div>
-
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill"></div>
       </div>
       <p class="small">每征服 10 座會解鎖祝賀卡 🎉</p>
     </section>
 
-    <!-- Bear Talk -->
     <section class="card bear-talk" id="bearTalk">
       🐻 熊熊說：把安全放第一名，你就已經是高手了。
       <div class="hint">提示：長按可複製小語</div>
     </section>
 
-    <!-- Route -->
     <section class="card">
       <h3>今天想挑戰哪種路線？</h3>
 
@@ -61,9 +54,7 @@
       </label>
 
       <div class="route" data-diff="beginner">
-        <div class="route-left">
-          <div class="route-icon">🎒</div>
-        </div>
+        <div class="route-left"><div class="route-icon">🎒</div></div>
         <div class="route-mid">
           <div class="route-title">新手百岳</div>
           <div class="route-sub">親民路線，慢慢走也很棒</div>
@@ -72,9 +63,7 @@
       </div>
 
       <div class="route" data-diff="intermediate">
-        <div class="route-left">
-          <div class="route-icon">🥾</div>
-        </div>
+        <div class="route-left"><div class="route-icon">🥾</div></div>
         <div class="route-mid">
           <div class="route-title">進階挑戰</div>
           <div class="route-sub">體能與準備更重要</div>
@@ -83,9 +72,7 @@
       </div>
 
       <div class="route" data-diff="advanced">
-        <div class="route-left">
-          <div class="route-icon warn">⚠️</div>
-        </div>
+        <div class="route-left"><div class="route-icon warn">⚠️</div></div>
         <div class="route-mid">
           <div class="route-title">熊熊提醒：需帶隊</div>
           <div class="route-sub">曝險 / 迷途風險較高</div>
@@ -94,28 +81,67 @@
       </div>
     </section>
 
-    <!-- 底部留白：避免被固定工具列遮住 -->
     <div class="bottom-spacer"></div>
   </main>
 
-  <!-- 固定在最底下的 App 工具列（按鈕列） -->
-  <section class="dock">
+  <!-- ========== 百岳頁 ========== -->
+  <main class="content page hidden" id="pageList">
+
+    <header class="header">
+      <div class="bear">
+        <img src="./images/bear.png" alt="登山熊" />
+      </div>
+      <div class="header-info">
+        <div class="status">⛰️ 百岳清單</div>
+        <div class="progress-text">✅ <span id="listDoneCount">0</span> / 100</div>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="search-row">
+        <input id="searchInput" class="search" type="search" placeholder="搜尋山名（中文/英文）或高度，例如：玉山 / Yushan / 3952" />
+        <button id="btnClearSearch" class="search-clear">清除</button>
+      </div>
+
+      <div class="filter-row">
+        <button class="chip active" data-filter="all">全部</button>
+        <button class="chip" data-filter="beginner">新手</button>
+        <button class="chip" data-filter="intermediate">進階</button>
+        <button class="chip" data-filter="advanced">需帶隊</button>
+        <button class="chip" data-filter="done">已征服</button>
+        <button class="chip" data-filter="todo">未征服</button>
+      </div>
+
+      <div class="small">
+        ✅ 勾選「已征服」會同步進度（支援搜尋、篩選、滾動）
+      </div>
+    </section>
+
+    <section class="card list-card">
+      <div id="mountainList" class="m-list"></div>
+    </section>
+
+    <div class="bottom-spacer"></div>
+  </main>
+
+  <!-- 固定 Dock（抽山頁才顯示） -->
+  <section class="dock" id="dock">
     <button class="dock-btn" id="btnHistory">📜 抽卡紀錄</button>
     <button class="dock-btn" id="btnExport">📸 匯出 IG 祝賀圖</button>
     <button class="dock-btn primary" id="btnDraw">🎴 立即抽一張</button>
   </section>
 
-  <!-- Bottom Nav（像你截圖那種） -->
+  <!-- Bottom Nav -->
   <nav class="bottom-nav">
-    <button class="active">抽山</button>
-    <button>百岳</button>
-    <button>日記</button>
-    <button>設定</button>
+    <button class="nav-btn active" data-page="draw">抽山</button>
+    <button class="nav-btn" data-page="list">百岳</button>
+    <button class="nav-btn" data-page="journal">日記</button>
+    <button class="nav-btn" data-page="settings">設定</button>
   </nav>
 
 </div>
 
-<!-- 山卡彈窗 Modal -->
+<!-- 山卡彈窗 Modal（抽山結果用） -->
 <div class="modal hidden" id="modal">
   <div class="modal-mask" id="modalMask"></div>
 
