@@ -450,5 +450,5 @@ body{ background:var(--bg); }
   border:2px solid var(--line);
   background:#fff;
   object-fit:cover;
-  max-height:240px;
+  max-height:360px;
 }
