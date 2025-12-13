@@ -1,97 +1,93 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>出遊熊百岳</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4a63a" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+
+  <title>登山熊 🐻⛰️</title>
+
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
 <div class="app">
 
   <!-- Header -->
-  <header class="app-header">
-    <img src="images/bear.png" class="bear-avatar" id="bearAvatar" />
-    <div class="header-info">
-      <div class="status">⛰ 今日狀態：準備出發</div>
-      <div class="progress-wrap">
-        <div class="progress-bar" id="progressBar"></div>
-      </div>
-      <div class="progress-text" id="progressText">0 / 100</div>
+  <header class="top">
+    <div class="bear" id="bearBtn">🐻</div>
+    <div class="info">
+      <h1>登山熊</h1>
+      <p id="statusText">今日狀態：準備出發</p>
     </div>
+    <div class="progress-badge" id="progressBadge">0 / 100</div>
   </header>
 
-  <!-- Main -->
-  <main class="app-main">
+  <!-- Progress -->
+  <section class="card">
+    <h2>登山進度</h2>
+    <div class="progress-bar">
+      <div class="bar-fill" id="barFill"></div>
+    </div>
+    <p class="hint">每征服 10 座解鎖祝賀卡 🎉</p>
+  </section>
 
-    <button class="primary-btn" id="drawBtn">🎴 立即抽一張</button>
+  <!-- 熊熊小語 -->
+  <section class="card bubble">
+    <div class="bubble-bear">🐻</div>
+    <div class="bubble-text" id="bearTalk">
+      把安全放第一名，你就已經是高手了。
+    </div>
+  </section>
 
-    <div class="btn-row">
-      <button id="exportCardBtn">📸 匯出抽卡 IG 圖</button>
-      <button id="exportCongratsBtn">🎉 匯出祝賀圖</button>
+  <!-- Routes -->
+  <section class="card">
+    <h2>今天想挑戰哪種路線？</h2>
+
+    <div class="route" data-mode="easy">
+      🎒 新手百岳
+      <span>親民路線，慢慢走也很棒</span>
     </div>
 
-    <div class="btn-row">
-      <button id="historyBtn">📜 抽卡紀錄</button>
-      <button id="safetyBtn">⚠️ 山難 / 急救</button>
+    <div class="route" data-mode="normal">
+      🥾 進階挑戰
+      <span>體能與準備更重要</span>
     </div>
 
-    <!-- Diary -->
-    <section class="diary">
-      <h3>📔 登山日記</h3>
-      <input type="date" id="diaryDate">
-      <input type="file" id="diaryImage" accept="image/*">
-      <textarea id="diaryText" placeholder="今天的登山心情..."></textarea>
-      <button id="saveDiaryBtn">💾 儲存日記</button>
-    </section>
+    <div class="route warn" data-mode="hard">
+      ⚠️ 熊熊提醒：需帶隊
+      <span>曝險 / 迷途風險較高</span>
+    </div>
+  </section>
 
-  </main>
+  <!-- Actions -->
+  <section class="actions">
+    <button id="drawBtn">🎴 立即抽一座山</button>
+    <button id="igBtn">📸 匯出 IG 祝賀圖</button>
+  </section>
 
-  <!-- Footer -->
-  <footer class="app-footer">
-    <button id="resetBtn">⚙️ 清空重置</button>
-    <a href="https://instagram.com/luckygbear" target="_blank" rel="noopener">IG @luckygbear</a>
-  </footer>
+  <!-- Result -->
+  <section class="card result" id="resultCard" hidden>
+    <h3 id="mountainName"></h3>
+    <p id="mountainInfo"></p>
+    <p class="bear-say" id="mountainBear"></p>
+    <button id="markDoneBtn">✅ 標記已征服</button>
+  </section>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom">
+    <button class="active">抽山</button>
+    <button>百岳</button>
+    <button>日記</button>
+    <button>設定</button>
+  </nav>
 
 </div>
 
-<!-- 抽山 Modal -->
-<div class="modal" id="drawModal">
-  <div class="modal-content">
-    <h2 id="modalTitle"></h2>
-    <p id="modalStory"></p>
-    <p id="modalAdvice"></p>
-    <button onclick="closeModal()">關閉</button>
-  </div>
-</div>
-
-<!-- 安全 Modal -->
-<div class="modal" id="safetyModal">
-  <div class="modal-content">
-    <h2>🚑 山難與急救</h2>
-    <ul>
-      <li>⛑ 失溫：立即保暖、隔離地面、避免吹風</li>
-      <li>🤕 高山症：頭痛噁心走不穩 → 立刻下撤</li>
-      <li>🧭 迷途：停下來、回報定位、不要亂鑽</li>
-    </ul>
-    <a href="tel:112" class="emergency">📞 緊急求救 112</a>
-    <button onclick="closeSafety()">關閉</button>
-  </div>
-</div>
-
-<!-- 抽卡紀錄 Modal -->
-<div class="modal" id="historyModal">
-  <div class="modal-content">
-    <h2>📜 抽卡紀錄</h2>
-    <div id="historyList" style="max-height:45vh; overflow:auto; line-height:1.6;"></div>
-    <button onclick="closeHistory()">關閉</button>
-  </div>
-</div>
-
-<!-- Canvas（用來匯出 IG 圖） -->
-<canvas id="exportCanvas" width="1080" height="1080" style="display:none;"></canvas>
-
-<script src="script.js"></script>
+<script src="./script.js"></script>
 </body>
 </html>
