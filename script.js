@@ -1,12 +1,9 @@
-/* 出遊熊百岳 - script.js
-   需求整合：
-   - 讀取 mountains.json
-   - 三種路線抽卡
-   - 已征服勾選 + 集卡模式排除重抽
-   - 抽卡紀錄（顯示3筆 + 可捲動）
-   - 匯出抽卡圖 / 匯出紀錄圖（IG分享）
-   - 每10座里程碑祝賀卡彈窗 + 可匯出
-   - 緊急求助電話 + 急救教學
+/* 出遊熊百岳 - script.js（修正版）
+   - 抽山結果用跳出視窗顯示（Modal）
+   - 抽卡動畫也用 Modal（不依賴 resultPanel）
+   - 修復：openDrawResultModal 放錯位置導致整個 JS 停機
+   - 修復：刪掉 resultPanel 後 fakeDrawAnimation 仍引用造成錯誤
+   - 其餘功能維持：讀取 mountains.json / 清單 / 勾選 / 匯出 / 里程碑 / 急救 / 安裝提示
 */
 
 const STORAGE = {
@@ -19,7 +16,7 @@ const STORAGE = {
 let allMountains = [];
 let currentMountain = null;
 
-// ===== 熊熊小語（可自行擴充）=====
+// ===== 熊熊小語 =====
 const bearQuotes = [
   "把安全放第一名，你就已經是高手了。",
   "你不是在征服山，你是在學會照顧自己。",
@@ -44,7 +41,6 @@ function loadSet(key){
 function saveSet(key, set){
   localStorage.setItem(key, JSON.stringify([...set]));
 }
-
 function loadArr(key){
   try{
     const raw = localStorage.getItem(key);
@@ -56,20 +52,31 @@ function loadArr(key){
 function saveArr(key, arr){
   localStorage.setItem(key, JSON.stringify(arr));
 }
-
 function nowISO(){
   const d = new Date();
   const pad = (x)=> String(x).padStart(2,"0");
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+function escapeHtml(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function badgeByDiff(d){
+  if(d==="beginner") return "🎒 新手";
+  if(d==="intermediate") return "🥾 進階";
+  return "⚠️ 需帶隊";
+}
 
 // ===== mountains.json 兼容 =====
 function normalizeMountain(m, idx){
-  // 兼容你之前可能用的欄位：name_zh/name_en/difficulty_zh 等
   const name = m.name || m.name_zh || `未命名-${idx+1}`;
   const en = m.name_en ? ` | ${m.name_en}` : (m.nameEn ? ` | ${m.nameEn}` : "");
   const elev = m.elevation_m ?? m.elevation ?? "";
-  const diff = m.difficulty || "beginner"; // beginner / intermediate / advanced
+  const diff = m.difficulty || "beginner";
   const diffZh = m.difficulty_zh || (diff==="beginner"?"新手友善":diff==="intermediate"?"需要經驗":"建議帶隊");
 
   return {
@@ -93,7 +100,48 @@ async function loadMountains(){
   allMountains = list.map(normalizeMountain);
 }
 
-// ===== UI: progress =====
+// ===== Modal =====
+function openModal(title, bodyHtml, footHtml=""){
+  $("#modalTitle").textContent = title;
+  $("#modalBody").innerHTML = bodyHtml;
+  $("#modalFoot").innerHTML = footHtml;
+  $("#modal").style.display = "flex";
+}
+function closeModal(){
+  $("#modal").style.display = "none";
+  $("#modalBody").innerHTML = "";
+  $("#modalFoot").innerHTML = "";
+}
+
+// ===== Toast =====
+function toast(msg){
+  let el = document.getElementById("toast");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "toast";
+    el.style.position = "fixed";
+    el.style.left = "50%";
+    el.style.transform = "translateX(-50%)";
+    el.style.bottom = "110px";
+    el.style.maxWidth = "calc(100% - 40px)";
+    el.style.padding = "10px 14px";
+    el.style.borderRadius = "14px";
+    el.style.background = "rgba(0,0,0,.78)";
+    el.style.color = "#fff";
+    el.style.fontWeight = "900";
+    el.style.fontSize = "13px";
+    el.style.zIndex = "120";
+    el.style.opacity = "0";
+    el.style.transition = "opacity .2s ease";
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = "1";
+  clearTimeout(el._t);
+  el._t = setTimeout(()=> el.style.opacity="0", 1200);
+}
+
+// ===== progress =====
 function updateProgress(){
   const visited = loadSet(STORAGE.visited);
   const total = allMountains.length || 100;
@@ -107,7 +155,7 @@ function updateProgress(){
   checkMilestone(visited.size);
 }
 
-// ===== Milestone (每10座) =====
+// ===== milestone =====
 function checkMilestone(count){
   const total = allMountains.length || 100;
   const step = 10;
@@ -143,7 +191,7 @@ function openCongratsModal(m, total){
   $("#btnCloseCongrats").onclick = closeModal;
 }
 
-// ===== Bear quote interactions =====
+// ===== bear quote =====
 function setRandomQuote(){
   const q = bearQuotes[Math.floor(Math.random() * bearQuotes.length)];
   $("#bearQuote").textContent = q;
@@ -164,30 +212,16 @@ function enableLongPressCopy(el){
   el.addEventListener("touchmove", ()=>{ if(t) clearTimeout(t); });
 }
 
-// ===== Draw =====
+// ===== draw pool =====
 function getPoolByDifficulty(diff, collectMode){
   const visited = loadSet(STORAGE.visited);
   let pool = allMountains.filter(m => m.difficulty === diff);
-
   if(diff === "any") pool = allMountains.slice();
-
-  if(collectMode){
-    pool = pool.filter(m => !visited.has(String(m.id)));
-  }
+  if(collectMode) pool = pool.filter(m => !visited.has(String(m.id)));
   return pool;
 }
 
-function drawOne(diff){
-  const collectMode = $("#collectMode").checked;
-  const pool = getPoolByDifficulty(diff, collectMode);
-
-  if(pool.length === 0){
-    openModal("沒有可抽的山了", `
-      <div class="muted">集卡模式下，這個難度的山你可能都已征服了。</div>
-      <div class="muted small" style="margin-top:8px;">你可以取消「集卡模式」或改抽其他難度。</div>
-    `, `<button class="btn ghost" onclick="closeModal()">知道了</button>`);
-    return;
-  }
+// ✅ 抽到結果：跳出視窗（放在外面！不要塞進 drawOne）
 function openDrawResultModal(m){
   const visited = loadSet(STORAGE.visited);
   const isVisited = visited.has(String(m.id));
@@ -224,45 +258,31 @@ function openDrawResultModal(m){
     `
   );
 
-  // 匯出圖片
   $("#btnExportDraw").onclick = async () => {
-    await exportElementAsImage(
-      document.getElementById("drawResultCard"),
-      `bear-draw-${m.id}.png`
-    );
+    await exportElementAsImage(document.getElementById("drawResultCard"), `bear-draw-${m.id}.png`);
   };
-
-  // 勾選已去過
   $("#btnToggleVisitedDraw").onclick = () => {
     toggleVisited(m.id);
     closeModal();
   };
 }
-  // 抽卡等待動畫（簡單但很有抽卡感）
-  fakeDrawAnimation(async ()=>{
-    const picked = pool[Math.floor(Math.random()*pool.length)];
-    currentMountain = picked;
-    pushHistory(picked);
-    openDrawResultModal(picked);
-  });
-}
 
-function fakeDrawAnimation(done){
-  const panel = $("#resultPanel");
-  panel.style.display = "block";
-  $("#resultCard").innerHTML = `
-    <div class="mount-title">🎲 抽籤中…</div>
-    <div class="mount-sub">出遊熊正在翻卡片，請稍等一下…</div>
-    <div class="mount-body">
-      <div class="spinner"></div>
-      <div class="muted small" style="margin-top:8px;">（小提醒：看天氣、看時間、看體力）</div>
+// ✅ 抽卡動畫：用 Modal，不要再用 resultPanel
+function fakeDrawAnimationThen(done){
+  openModal("🎲 抽籤中…", `
+    <div class="mount-card">
+      <div class="mount-title">出遊熊正在翻卡片…</div>
+      <div class="mount-sub">請稍等一下下 🐻</div>
+      <div class="mount-body">
+        <div class="spinner"></div>
+        <div class="muted small" style="margin-top:8px;">（小提醒：看天氣、看時間、看體力）</div>
+      </div>
     </div>
-  `;
-  injectSpinnerCSSOnce();
+  `);
 
+  injectSpinnerCSSOnce();
   setTimeout(()=> done(), 700);
 }
-
 function injectSpinnerCSSOnce(){
   if(document.getElementById("spinner-css")) return;
   const s = document.createElement("style");
@@ -280,31 +300,24 @@ function injectSpinnerCSSOnce(){
   document.head.appendChild(s);
 }
 
-function renderResult(m){
-  const visited = loadSet(STORAGE.visited);
-  const isVisited = visited.has(String(m.id));
+function drawOne(diff){
+  const collectMode = $("#collectMode").checked;
+  const pool = getPoolByDifficulty(diff, collectMode);
 
-  $("#resultPanel").style.display = "block";
-  $("#btnToggleVisited").textContent = isVisited ? "✅ 已去過（取消）" : "✅ 勾選已去過";
+  if(pool.length === 0){
+    openModal("沒有可抽的山了", `
+      <div class="muted">集卡模式下，這個難度的山你可能都已征服了。</div>
+      <div class="muted small" style="margin-top:8px;">你可以取消「集卡模式」或改抽其他難度。</div>
+    `, `<button class="btn ghost" onclick="closeModal()">知道了</button>`);
+    return;
+  }
 
-  $("#resultCard").innerHTML = `
-    <div class="mount-title">⛰️ ${escapeHtml(m.name)}</div>
-    <div class="mount-sub">${m.elevation_m ? `${m.elevation_m}m` : ""}${m.en} ｜ ${escapeHtml(m.difficulty_zh)}</div>
-
-    <div class="mount-tags">
-      <span class="tag">${badgeByDiff(m.difficulty)}</span>
-      <span class="tag">📍 百岳抽卡</span>
-      ${isVisited ? `<span class="tag">✅ 已征服</span>` : ``}
-    </div>
-
-    <div class="mount-body">
-      <div>${escapeHtml(m.bear_story)}</div>
-      <div style="margin-top:8px;">${escapeHtml(m.bear_advice)}</div>
-      <div style="margin-top:8px;">${escapeHtml(m.risk_note)}</div>
-    </div>
-  `;
-
-  $("#btnToggleVisited").onclick = () => toggleVisited(m.id);
+  fakeDrawAnimationThen(()=>{
+    const picked = pool[Math.floor(Math.random()*pool.length)];
+    currentMountain = picked;
+    pushHistory(picked);
+    openDrawResultModal(picked);
+  });
 }
 
 // ===== visited toggle =====
@@ -320,11 +333,6 @@ function toggleVisited(id){
   }
   saveSet(STORAGE.visited, visited);
   updateProgress();
-
-  // 更新結果卡 / 清單
-  if(currentMountain && String(currentMountain.id) === key){
-    renderResult(currentMountain);
-  }
   renderList();
   renderDiaryPreview();
 }
@@ -345,31 +353,33 @@ function pushHistory(m){
     risk: m.risk_note,
     mood: diaryText
   });
-
-  // 最多存 50 筆（你也可以改更大）
-  const trimmed = arr.slice(0, 50);
-  saveArr(STORAGE.history, trimmed);
-
+  saveArr(STORAGE.history, arr.slice(0, 50));
   renderDiaryPreview();
 }
 
-// ===== list page =====
+// ===== list =====
 function renderList(){
-  if(!allMountains.length) return;
+  const el = $("#mountList");
+  if(!el) return;
+
+  if(!allMountains.length){
+    el.innerHTML = `<div class="muted">尚未載入 mountains.json</div>`;
+    return;
+  }
+
   const visited = loadSet(STORAGE.visited);
-  const q = ($("#searchBox")?.value || "").trim();
+  const q = ($("#searchBox")?.value || "").trim().toLowerCase();
   const diff = ($("#filterDiff")?.value || "all");
 
   let items = allMountains.slice();
   if(diff !== "all") items = items.filter(m=> m.difficulty === diff);
   if(q){
-    const lower = q.toLowerCase();
-    items = items.filter(m => (m.name || "").toLowerCase().includes(lower) || (m.en || "").toLowerCase().includes(lower));
+    items = items.filter(m =>
+      (m.name || "").toLowerCase().includes(q) || (m.en || "").toLowerCase().includes(q)
+    );
   }
 
-  const el = $("#mountList");
   el.innerHTML = "";
-
   items.forEach(m=>{
     const checked = visited.has(String(m.id));
     const row = document.createElement("div");
@@ -427,10 +437,10 @@ function openMountainModal(m){
 
 // ===== Diary =====
 function renderDiaryPreview(){
-  const arr = loadArr(STORAGE.history).slice(0,3);
   const box = $("#diaryPreview");
   if(!box) return;
 
+  const arr = loadArr(STORAGE.history).slice(0,3);
   if(arr.length===0){
     box.innerHTML = `<div class="muted">目前還沒有抽卡紀錄。</div>`;
     return;
@@ -452,10 +462,9 @@ function saveDiary(){
   toast("已儲存今日心情 📝");
 }
 
-// ===== Export image (用 CDN 動態載入 html2canvas，避免檔案變大) =====
+// ===== Export image =====
 async function ensureHtml2Canvas(){
   if(window.html2canvas) return;
-
   await new Promise((resolve, reject)=>{
     const s = document.createElement("script");
     s.src = "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
@@ -464,7 +473,6 @@ async function ensureHtml2Canvas(){
     document.head.appendChild(s);
   });
 }
-
 async function exportElementAsImage(element, filename){
   if(!element) return;
   try{
@@ -472,29 +480,21 @@ async function exportElementAsImage(element, filename){
     await ensureHtml2Canvas();
     const canvas = await window.html2canvas(element, { scale: 2, backgroundColor: "#ffffff" });
     const dataUrl = canvas.toDataURL("image/png");
-
-    // 下載
     const a = document.createElement("a");
     a.href = dataUrl;
     a.download = filename;
     a.click();
-
     toast("已產生圖片 ✅（可分享到 IG）");
   }catch(e){
     console.error(e);
     toast("匯出失敗，請稍後再試");
   }
 }
-
-// 匯出「抽卡紀錄圖」
 async function exportHistoryImage(){
   const hist = loadArr(STORAGE.history);
-  if(hist.length===0){
-    toast("目前沒有紀錄可以匯出");
-    return;
-  }
+  if(hist.length===0){ toast("目前沒有紀錄可以匯出"); return; }
 
-  const top = hist.slice(0, 10); // 你要更多可改
+  const top = hist.slice(0, 10);
   const html = `
     <div class="export-wrap" id="historyExport">
       <div class="export-title">出遊熊百岳｜抽卡紀錄</div>
@@ -512,15 +512,11 @@ async function exportHistoryImage(){
       </div>
     </div>
   `;
-
   openModal("📸 匯出抽卡紀錄圖", html, `
     <button class="btn primary" id="btnDoExportHistory">📸 產生圖片</button>
     <button class="btn ghost" onclick="closeModal()">關閉</button>
   `);
-
-  $("#btnDoExportHistory").onclick = async ()=>{
-    await exportElementAsImage($("#historyExport"), `bear-history-${Date.now()}.png`);
-  };
+  $("#btnDoExportHistory").onclick = async ()=> exportElementAsImage($("#historyExport"), `bear-history-${Date.now()}.png`);
 }
 
 // ===== Emergency =====
@@ -533,104 +529,41 @@ function callEmergency(){
       <a class="tag" href="tel:112">📞 112（手機緊急）</a>
     </div>
     <div class="muted small" style="margin-top:10px;line-height:1.6;">
-      若可行：保持冷靜、回報位置（座標/里程/地標）、人數、傷勢、天候、可否行走。<br>
-      有訊號就先傳訊息給親友，並保留手機電量。
+      若可行：回報位置（座標/地標/里程）、人數、傷勢、天候、可否行走。<br>
+      有訊號先傳訊息給親友，並保留手機電量。
     </div>
   `, `<button class="btn ghost" onclick="closeModal()">知道了</button>`);
 }
-
 function firstAidGuide(){
   openModal("🩹 緊急急救教學（登山常見）", `
     <div class="mini-card">
       <div style="font-weight:1000;">⛰️ 高山症（頭痛/噁心/喘）</div>
       <div class="muted small" style="margin-top:6px;line-height:1.6;">
-        立即停止上升、保暖、補水；症狀加重就下撤。若出現意識混亂/走路不穩/呼吸困難 → 優先求援。
+        停止上升、保暖、補水；症狀加重就下撤。意識混亂/走路不穩/呼吸困難 → 優先求援。
       </div>
     </div>
-
     <div class="mini-card">
       <div style="font-weight:1000;">🥶 失溫（發抖/反應慢）</div>
       <div class="muted small" style="margin-top:6px;line-height:1.6;">
-        立刻避風保暖（雨衣/鋁箔毯/乾衣物）、補充熱量；避免持續淋雨與久坐不動。
+        立刻避風保暖（雨衣/鋁箔毯/乾衣物）、補充熱量；避免持續淋雨。
       </div>
     </div>
-
     <div class="mini-card">
       <div style="font-weight:1000;">🩸 出血（外傷）</div>
       <div class="muted small" style="margin-top:6px;line-height:1.6;">
-        直接加壓止血（乾淨布/繃帶），持續壓住；傷口包紮固定，必要時求援。
+        直接加壓止血，持續壓住；包紮固定，必要時求援。
       </div>
     </div>
-
     <div class="mini-card">
       <div style="font-weight:1000;">🦴 扭傷/骨折</div>
       <div class="muted small" style="margin-top:6px;line-height:1.6;">
-        先固定再移動；能不走就不走。腫脹明顯或疼痛劇烈 → 優先求援。
+        先固定再移動；能不走就不走。疼痛劇烈或腫脹明顯 → 優先求援。
       </div>
     </div>
-
     <div class="safe-strip" style="margin-top:10px;">
-      🐻 熊熊提醒：最重要的是「停止惡化」＋「安全下撤/求援」。
+      🐻 熊熊提醒：最重要是「停止惡化」＋「安全下撤/求援」。
     </div>
   `, `<button class="btn ghost" onclick="closeModal()">關閉</button>`);
-}
-
-// ===== Modal =====
-function openModal(title, bodyHtml, footHtml=""){
-  $("#modalTitle").textContent = title;
-  $("#modalBody").innerHTML = bodyHtml;
-  $("#modalFoot").innerHTML = footHtml;
-  $("#modal").style.display = "flex";
-}
-function closeModal(){
-  $("#modal").style.display = "none";
-  $("#modalBody").innerHTML = "";
-  $("#modalFoot").innerHTML = "";
-}
-
-// ===== Toast =====
-function toast(msg){
-  let el = document.getElementById("toast");
-  if(!el){
-    el = document.createElement("div");
-    el.id = "toast";
-    el.style.position = "fixed";
-    el.style.left = "50%";
-    el.style.transform = "translateX(-50%)";
-    el.style.bottom = "110px";
-    el.style.maxWidth = "calc(100% - 40px)";
-    el.style.padding = "10px 14px";
-    el.style.borderRadius = "14px";
-    el.style.background = "rgba(0,0,0,.78)";
-    el.style.color = "#fff";
-    el.style.fontWeight = "900";
-    el.style.fontSize = "13px";
-    el.style.zIndex = "120";
-    el.style.opacity = "0";
-    el.style.transition = "opacity .2s ease";
-    document.body.appendChild(el);
-  }
-  el.textContent = msg;
-  el.style.opacity = "1";
-  clearTimeout(el._t);
-  el._t = setTimeout(()=> el.style.opacity="0", 1200);
-}
-
-// ===== badges =====
-function badgeByDiff(d){
-  if(d==="beginner") return "🎒 新手";
-  if(d==="intermediate") return "🥾 進階";
-  return "⚠️ 需帶隊";
-}
-
-// ===== escape =====
-function escapeHtml(s){
-  return String(s ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
 }
 
 // ===== nav =====
@@ -640,28 +573,24 @@ function switchPage(name){
     const el = document.getElementById(`page${p}`);
     if(el) el.style.display = (p===name) ? "" : "none";
   });
-
   $$(".nav-item").forEach(btn=>{
     btn.classList.toggle("active", btn.dataset.page === name);
   });
-
-  // 進入某頁時刷新
   if(name==="List") renderList();
   if(name==="Diary") renderDiaryPreview();
 }
-/* ===== PWA Install Prompt ===== */
+
+// ===== Install Prompt =====
 let deferredPrompt = null;
 const INSTALL_KEY = "bear100_install_prompt_shown";
 
 function isIOS(){
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
-
 function isInStandalone(){
   return window.matchMedia("(display-mode: standalone)").matches
     || window.navigator.standalone === true;
 }
-
 function showInstallHint(){
   if(isInStandalone()) return;
   if(localStorage.getItem(INSTALL_KEY)) return;
@@ -670,12 +599,10 @@ function showInstallHint(){
   const desc = document.getElementById("installDesc");
   const btnInstall = document.getElementById("btnInstall");
   const btnLater = document.getElementById("btnInstallLater");
+  if(!hint || !desc || !btnInstall || !btnLater) return; // ✅ 防呆
 
   if(isIOS()){
-    desc.innerHTML = `
-      點擊 Safari 的 <b>分享</b> 圖示<br>
-      再選「<b>加入主畫面</b>」即可 🐻
-    `;
+    desc.innerHTML = `點擊 Safari 的 <b>分享</b> 圖示<br>再選「<b>加入主畫面</b>」即可 🐻`;
     btnInstall.textContent = "我知道了";
     btnInstall.onclick = ()=>{
       hint.style.display = "none";
@@ -683,7 +610,7 @@ function showInstallHint(){
     };
   }else{
     btnInstall.onclick = async ()=>{
-      if(!deferredPrompt) return;
+      if(!deferredPrompt){ toast("此瀏覽器暫不支援一鍵安裝"); return; }
       deferredPrompt.prompt();
       await deferredPrompt.userChoice;
       deferredPrompt = null;
@@ -699,22 +626,16 @@ function showInstallHint(){
 
   hint.style.display = "flex";
 }
-
-/* Android / Chrome install event */
 window.addEventListener("beforeinstallprompt", (e)=>{
   e.preventDefault();
   deferredPrompt = e;
 });
 
-/* 延遲顯示（避免一進來就打擾） */
-setTimeout(showInstallHint, 1500);
 // ===== init =====
 async function init(){
   // modal close
   $("#modalClose").onclick = closeModal;
-  $("#modal").addEventListener("click", (e)=>{
-    if(e.target.id==="modal") closeModal();
-  });
+  $("#modal").addEventListener("click", (e)=>{ if(e.target.id==="modal") closeModal(); });
 
   // bear quote
   setRandomQuote();
@@ -722,20 +643,10 @@ async function init(){
   $("#bearAvatar").addEventListener("click", ()=> setRandomQuote());
 
   // buttons
-  $$(".route-card").forEach(btn=>{
-    btn.addEventListener("click", ()=> drawOne(btn.dataset.diff));
-  });
+  $$(".route-card").forEach(btn=> btn.addEventListener("click", ()=> drawOne(btn.dataset.diff)));
   $("#btnDrawAny").addEventListener("click", ()=> drawOne("any"));
 
   $("#btnOpenHistory").addEventListener("click", ()=> openHistoryModal());
-  $("#btnExportCard").addEventListener("click", async ()=>{
-    if(!currentMountain){
-      toast("請先抽一座山");
-      return;
-    }
-    await exportElementAsImage($("#resultCard"), `bear-draw-${currentMountain.id}.png`);
-  });
-
   $("#btnCall119").addEventListener("click", callEmergency);
   $("#btnFirstAid").addEventListener("click", firstAidGuide);
 
@@ -751,7 +662,7 @@ async function init(){
   $("#btnReset").addEventListener("click", ()=>{
     openModal("🧹 清除本機資料", `
       <div class="muted">確定要清除進度與抽卡紀錄嗎？</div>
-      <div class="muted small" style="margin-top:8px;">（只影響本機，不影響你的 GitHub 檔案）</div>
+      <div class="muted small" style="margin-top:8px;">（只影響本機，不影響 GitHub 檔案）</div>
     `, `
       <button class="btn danger" id="btnDoReset">清除</button>
       <button class="btn ghost" onclick="closeModal()">取消</button>
@@ -762,7 +673,6 @@ async function init(){
       localStorage.removeItem(STORAGE.diary);
       localStorage.removeItem(STORAGE.milestone);
       currentMountain = null;
-      $("#resultPanel").style.display = "none";
       updateProgress();
       renderList();
       renderDiaryPreview();
@@ -772,9 +682,7 @@ async function init(){
   });
 
   // bottom nav
-  $$(".nav-item").forEach(btn=>{
-    btn.addEventListener("click", ()=> switchPage(btn.dataset.page));
-  });
+  $$(".nav-item").forEach(btn=> btn.addEventListener("click", ()=> switchPage(btn.dataset.page)));
 
   // load mountains
   try{
@@ -782,7 +690,7 @@ async function init(){
   }catch(e){
     console.error(e);
     openModal("mountains.json 讀取失敗", `
-      <div class="muted">請確認你根目錄有 <b>mountains.json</b>，且內容為 JSON。</div>
+      <div class="muted">請確認根目錄有 <b>mountains.json</b>，且內容為 JSON。</div>
       <div class="muted small" style="margin-top:8px;">GitHub Pages 路徑大小寫要一致：<b>mountains.json</b></div>
     `, `<button class="btn ghost" onclick="closeModal()">知道了</button>`);
   }
@@ -790,21 +698,23 @@ async function init(){
   updateProgress();
   renderList();
   renderDiaryPreview();
-
-  // default page
   switchPage("Draw");
+
+  // ✅ 安裝提示延後，且保證 DOM 都準備好了
+  setTimeout(showInstallHint, 1500);
 }
 
 function openHistoryModal(){
   const arr = loadArr(STORAGE.history);
   if(arr.length===0){
-    openModal("📜 抽卡紀錄", `<div class="muted">目前還沒有紀錄。</div>`, `<button class="btn ghost" onclick="closeModal()">關閉</button>`);
+    openModal("📜 抽卡紀錄", `<div class="muted">目前還沒有紀錄。</div>`,
+      `<button class="btn ghost" onclick="closeModal()">關閉</button>`);
     return;
   }
 
   const top = arr.slice(0, 3);
   const html = `
-    <div class="muted small">只顯示最新 3 筆（可上下捲動查看更多）</div>
+    <div class="muted small">只顯示最新 3 筆</div>
     <div style="margin-top:10px; max-height: 48vh; overflow:auto; display:flex; flex-direction:column; gap:10px;">
       ${top.map(h=>`
         <div class="mini-card">
