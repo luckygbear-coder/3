@@ -105,6 +105,8 @@ async function loadMountains(){
 function openModal(title, bodyHtml, footHtml=""){
   $("#modalTitle").textContent = title;
   $("#modalBody").innerHTML = bodyHtml;
+  <div class="export-sub">🐻 ...</div>
+${recentHtml}
   $("#modalFoot").innerHTML = footHtml;
   $("#modal").style.display = "flex";
 }
