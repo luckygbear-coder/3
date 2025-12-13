@@ -124,6 +124,73 @@
     <div class="bottom-spacer"></div>
   </main>
 
+  <!-- ========== 日記頁 ========== -->
+  <main class="content page hidden" id="pageJournal">
+
+    <header class="header">
+      <div class="bear">
+        <img src="./images/bear.png" alt="登山熊" />
+      </div>
+      <div class="header-info">
+        <div class="status">📒 勇者日記</div>
+        <div class="progress-text">📝 <span id="journalCount">0</span> 筆</div>
+      </div>
+    </header>
+
+    <section class="card">
+      <h3>新增一筆登山紀錄</h3>
+
+      <div class="j-grid">
+        <label class="j-label">
+          日期
+          <input id="jDate" class="j-input" type="date">
+        </label>
+
+        <label class="j-label">
+          山名（可直接選）
+          <select id="jMountain" class="j-input">
+            <option value="">— 選擇百岳（可空白）—</option>
+          </select>
+        </label>
+
+        <label class="j-label">
+          心情
+          <select id="jMood" class="j-input">
+            <option value="😄 開心">😄 開心</option>
+            <option value="🙂 平靜">🙂 平靜</option>
+            <option value="😮 驚喜">😮 驚喜</option>
+            <option value="🥺 很累但值得">🥺 很累但值得</option>
+            <option value="😣 辛苦">😣 辛苦</option>
+            <option value="😴 想睡">😴 想睡</option>
+          </select>
+        </label>
+
+        <label class="j-label j-span2">
+          今日心得（可空白）
+          <textarea id="jNote" class="j-text" rows="4" placeholder="例如：配速很穩、天氣變化快，記得帶風雨衣。"></textarea>
+        </label>
+      </div>
+
+      <div class="j-actions">
+        <button class="j-btn primary" id="btnAddJournal">＋ 新增紀錄</button>
+        <button class="j-btn" id="btnQuickFromCard">用「剛抽到的山」帶入</button>
+      </div>
+
+      <div class="small">資料會存在手機/瀏覽器（localStorage）。清除瀏覽器資料會消失。</div>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <h3>我的日記</h3>
+        <button class="j-btn danger" id="btnClearJournal">清空全部</button>
+      </div>
+
+      <div id="journalList" class="j-list"></div>
+    </section>
+
+    <div class="bottom-spacer"></div>
+  </main>
+
   <!-- 固定 Dock（抽山頁才顯示） -->
   <section class="dock" id="dock">
     <button class="dock-btn" id="btnHistory">📜 抽卡紀錄</button>
@@ -141,7 +208,7 @@
 
 </div>
 
-<!-- 山卡彈窗 Modal（抽山結果用） -->
+<!-- 山卡彈窗 Modal（抽山結果用 / 百岳看卡片也共用） -->
 <div class="modal hidden" id="modal">
   <div class="modal-mask" id="modalMask"></div>
 
