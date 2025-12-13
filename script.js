@@ -679,8 +679,7 @@ if($("#bearAvatar") && $("#bearQuote")){
   $("#bearAvatar").addEventListener("click", ()=> setRandomQuote());
 }
   // buttons
-$$(".route-tile").forEach(btn=> btn.addEventListener("click", ()=> drawOne(btn.dataset.diff)));  $("#btnDrawAny").addEventListener("click", ()=> drawOne("any"));
-
+$$(".route-tile").forEach(btn=> btn.addEventListener("click", ()=> drawOne(btn.dataset.diff)));  
   $("#btnOpenHistory").addEventListener("click", ()=> openHistoryModal());
   $("#btnCall119").addEventListener("click", callEmergency);
   $("#btnFirstAid").addEventListener("click", firstAidGuide);
