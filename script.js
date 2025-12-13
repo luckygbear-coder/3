@@ -852,7 +852,36 @@ function bindDiaryForm(){
       toast("照片讀取失敗");
     }
   });
+function applyAvatar(){
+  const data = localStorage.getItem(STORAGE.profileAvatar);
+  const img = document.getElementById("bearImg");
+  const fallback = document.getElementById("bearEmoji");
+  if(!img || !fallback) return;
 
+  if(data){
+    img.src = data;
+    img.style.display = "block";
+    fallback.style.display = "none";
+  }
+}
+
+function bindAvatarUpload(){
+  const up = document.getElementById("avatarUpload");
+  if(!up) return;
+  up.addEventListener("change", async ()=>{
+    const f = up.files?.[0];
+    if(!f) return;
+    try{
+      const data = await fileToDataUrlCompressed(f, 640, 0.85);
+      localStorage.setItem(STORAGE.profileAvatar, data);
+      applyAvatar();
+      toast("已更新大頭照 ✅");
+    }catch(e){
+      console.error(e);
+      toast("大頭照更新失敗");
+    }
+  });
+}
   saveBtn.addEventListener("click", async ()=>{
     const mountainId = selEl.value;
     if(!mountainId){
