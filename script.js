@@ -10,8 +10,9 @@ const STORAGE = {
   visited: "bear100_visited_ids",
   history: "bear100_draw_history",
   diary: "bear100_diary_today",
-  milestone: "bear100_milestone_last"
-  STORAGE.conquered = "bear100_conquered_log";
+  milestone: "bear100_milestone_last",
+  conquered: "bear100_conquered_log",
+  profileAvatar: "bear100_profile_avatar"
 };
 
 let allMountains = [];
@@ -103,12 +104,16 @@ async function loadMountains(){
 
 // ===== Modal =====
 function openModal(title, bodyHtml, footHtml=""){
-  $("#modalTitle").textContent = title;
-  $("#modalBody").innerHTML = bodyHtml;
-  <div class="export-sub">🐻 ...</div>
-${recentHtml}
-  $("#modalFoot").innerHTML = footHtml;
-  $("#modal").style.display = "flex";
+  const titleEl = $("#modalTitle");
+  const bodyEl = $("#modalBody");
+  const footEl = $("#modalFoot");
+  const modalEl = $("#modal");
+  if(!titleEl || !bodyEl || !footEl || !modalEl) return;
+
+  titleEl.textContent = title;
+  bodyEl.innerHTML = bodyHtml;
+  footEl.innerHTML = footHtml;
+  modalEl.style.display = "flex";
 }
 function closeModal(){
   $("#modal").style.display = "none";
