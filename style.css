@@ -355,3 +355,48 @@ body{ background:var(--bg); }
 .export-title{ font-weight:1000; font-size:16px; }
 .export-sub{ color:var(--muted); font-size:12px; margin-top:4px; }
 .export-ig{ margin-top:10px; font-weight:900; color:#a35d2a; }
+/* ===== Install Prompt ===== */
+.install-hint{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 200;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding: 14px;
+}
+
+.install-card{
+  width:100%;
+  max-width:460px;
+  background:#fff7e6;
+  border:2px solid #f5d3a6;
+  border-radius:20px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.25);
+  padding:16px;
+  animation: slideUp .35s ease;
+}
+
+@keyframes slideUp{
+  from{ transform: translateY(20px); opacity:0; }
+  to{ transform: translateY(0); opacity:1; }
+}
+
+.install-title{
+  font-size:16px;
+  font-weight:1000;
+}
+
+.install-desc{
+  margin-top:8px;
+  font-size:13px;
+  color:#7a5d6a;
+  line-height:1.6;
+}
+
+.install-actions{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+}
