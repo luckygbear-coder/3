@@ -6,8 +6,8 @@ const ASSETS = [
   "./script.js",
   "./mountains.json",
   "./travel-manifest.webmanifest",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
+  "./icons/hiking_bear_icon_192.png",
+  "./icons/hiking_bear_icon_512.png",
   "./images/bear.png"
 ];
 
