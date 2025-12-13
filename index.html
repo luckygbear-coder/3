@@ -155,6 +155,9 @@
       <section class="page" id="pageSettings" style="display:none;">
         <div class="card">
           <div class="h2">設定</div>
+          <div class="h3" style="margin-top:10px;">大頭照</div>
+          <input class="input" type="file" id="avatarUpload" accept="image/*" />
+          <div class="muted small">上傳後會存在你的手機本機（不會上傳到伺服器）。</div>
           <div class="settings">
             <button class="btn ghost" id="btnReset">🧹 清除本機資料（進度/紀錄）</button>
             <div class="muted small">
@@ -215,5 +218,41 @@
     </div>
   </div>
 </div>
+const PROFILE_KEY = "bear100_profile_avatar";
+
+async function setAvatarFromFile(file){
+  const data = await fileToDataUrlCompressed(file, 640, 0.85);
+  localStorage.setItem(PROFILE_KEY, data);
+  applyAvatar();
+}
+
+function applyAvatar(){
+  const data = localStorage.getItem(PROFILE_KEY);
+  const img = document.getElementById("bearImg");
+  const fallback = document.getElementById("bearEmoji");
+  if(!img || !fallback) return;
+
+  if(data){
+    img.src = data;
+    img.style.display = "block";
+    fallback.style.display = "none";
+  }
+}
+
+function bindAvatarUpload(){
+  const up = document.getElementById("avatarUpload");
+  if(!up) return;
+  up.addEventListener("change", async ()=>{
+    const f = up.files?.[0];
+    if(!f) return;
+    try{
+      await setAvatarFromFile(f);
+      toast("已更新大頭照 ✅");
+    }catch(e){
+      console.error(e);
+      toast("大頭照更新失敗");
+    }
+  });
+}
 </body>
 </html>
