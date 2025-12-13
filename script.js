@@ -188,13 +188,62 @@ function drawOne(diff){
     `, `<button class="btn ghost" onclick="closeModal()">知道了</button>`);
     return;
   }
+function openDrawResultModal(m){
+  const visited = loadSet(STORAGE.visited);
+  const isVisited = visited.has(String(m.id));
 
+  openModal(
+    "🎉 抽到這座山",
+    `
+    <div class="mount-card" id="drawResultCard">
+      <div class="mount-title">⛰️ ${escapeHtml(m.name)}</div>
+      <div class="mount-sub">
+        ${m.elevation_m ? `${m.elevation_m}m` : ""}
+        ${m.en || ""} ｜ ${escapeHtml(m.difficulty_zh)}
+      </div>
+
+      <div class="mount-tags">
+        <span class="tag">${badgeByDiff(m.difficulty)}</span>
+        ${isVisited ? `<span class="tag">✅ 已征服</span>` : ``}
+      </div>
+
+      <div class="mount-body">
+        <div>${escapeHtml(m.bear_story)}</div>
+        <div style="margin-top:8px;">${escapeHtml(m.bear_advice)}</div>
+        <div style="margin-top:8px;">${escapeHtml(m.risk_note)}</div>
+      </div>
+
+      <div class="export-ig">📷 IG：@luckygbear</div>
+    </div>
+    `,
+    `
+    <button class="btn primary" id="btnExportDraw">📸 匯出 IG 抽卡圖</button>
+    <button class="btn ghost" id="btnToggleVisitedDraw">
+      ${isVisited ? "取消已去過" : "勾選已去過"}
+    </button>
+    `
+  );
+
+  // 匯出圖片
+  $("#btnExportDraw").onclick = async () => {
+    await exportElementAsImage(
+      document.getElementById("drawResultCard"),
+      `bear-draw-${m.id}.png`
+    );
+  };
+
+  // 勾選已去過
+  $("#btnToggleVisitedDraw").onclick = () => {
+    toggleVisited(m.id);
+    closeModal();
+  };
+}
   // 抽卡等待動畫（簡單但很有抽卡感）
   fakeDrawAnimation(async ()=>{
     const picked = pool[Math.floor(Math.random()*pool.length)];
     currentMountain = picked;
-    renderResult(picked);
     pushHistory(picked);
+    openDrawResultModal(picked);
   });
 }
 
