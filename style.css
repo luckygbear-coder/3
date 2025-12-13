@@ -25,11 +25,12 @@ body {
   position: relative;
 }
 
-/* 內容可捲動；底部留空給 dock + bottom nav */
 .content{
   min-height: 100vh;
-  padding-bottom: 200px; /* 給 dock + bottom-nav 的空間 */
+  padding-bottom: 200px;
 }
+
+.hidden{ display:none; }
 
 .header {
   display: flex;
@@ -51,17 +52,17 @@ body {
   border: 1px solid rgba(0,0,0,.08);
 }
 
-/* ✅ 圖片等比例顯示、不裁切 */
+/* ✅ 圖片等比例 */
 .bear img{
   width: 100%;
   height: 100%;
-  object-fit: contain;   /* 關鍵：等比例完整顯示 */
+  object-fit: contain;
   display: block;
 }
 
 .header-info { flex: 1; }
 .status { font-size: 14px; }
-.progress-text { font-weight: 700; }
+.progress-text { font-weight: 800; }
 
 .card {
   background: var(--card);
@@ -128,18 +129,18 @@ body {
 .route-icon.warn{ background: rgba(255,107,107,.18); }
 
 .route-mid{ flex:1; }
-.route-title{ font-weight: 800; }
+.route-title{ font-weight: 900; }
 .route-sub{ font-size: 12px; color:#777; margin-top:2px; }
 .route-right{ color:#999; font-size: 20px; }
 
 .bottom-spacer{ height: 20px; }
 
-/* ✅ 固定在最底下：按鈕 Dock */
+/* Dock */
 .dock{
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 64px; /* 留給 bottom-nav */
+  bottom: 64px;
   width: min(480px, calc(100vw - 24px));
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -161,7 +162,7 @@ body {
   grid-column: span 2;
   background: var(--primary);
   color: #fff;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 /* Bottom Nav */
@@ -191,24 +192,21 @@ body {
 
 .bottom-nav .active{
   color:#222;
-  font-weight: 900;
+  font-weight: 1000;
 }
 
-/* ✅ Modal（彈跳視窗） */
+/* Modal */
 .modal.hidden{ display:none; }
-
 .modal{
   position: fixed;
   inset: 0;
   z-index: 50;
 }
-
 .modal-mask{
   position:absolute;
   inset:0;
   background: rgba(0,0,0,.38);
 }
-
 .modal-card{
   position:absolute;
   left:50%;
@@ -221,7 +219,6 @@ body {
   box-shadow: 0 20px 50px rgba(0,0,0,.35);
   overflow: hidden;
 }
-
 .modal-head{
   display:flex;
   align-items:center;
@@ -230,8 +227,7 @@ body {
   background: #fff1cf;
   border-bottom: 1px dashed rgba(0,0,0,.16);
 }
-
-.modal-title{ font-weight: 900; }
+.modal-title{ font-weight: 1000; }
 .modal-close{
   border:none;
   background:#fff;
@@ -240,32 +236,14 @@ body {
   cursor:pointer;
   border: 1px solid rgba(0,0,0,.12);
 }
-
-.modal-body{
-  padding: 14px 14px 10px;
-}
-
-.big-title{
-  font-size: 20px;
-  font-weight: 1000;
-}
-.subline{
-  margin-top: 6px;
-  color:#444;
-  font-size: 13px;
-}
-.divider{
-  height: 1px;
-  background: rgba(0,0,0,.10);
-  margin: 12px 0;
-}
-
-.mountain-name{ font-weight: 900; font-size: 16px; }
+.modal-body{ padding: 14px 14px 10px; }
+.big-title{ font-size: 20px; font-weight: 1000; }
+.subline{ margin-top: 6px; color:#444; font-size: 13px; }
+.divider{ height: 1px; background: rgba(0,0,0,.10); margin: 12px 0; }
+.mountain-name{ font-weight: 1000; font-size: 16px; }
 .mountain-info{ color:#666; font-size: 12px; margin-top: 2px; }
-
 .txt{ margin: 8px 0; line-height: 1.6; font-size: 13px; color:#333; }
 .risk{ color:#c0392b; font-size: 13px; line-height: 1.6; }
-
 .igline{ color:#666; font-size: 12px; }
 
 .modal-actions{
@@ -275,7 +253,6 @@ body {
   background: #fff7e4;
   border-top: 1px dashed rgba(0,0,0,.14);
 }
-
 .wide{
   flex:1;
   border:none;
@@ -284,14 +261,227 @@ body {
   cursor:pointer;
   font-size: 14px;
 }
-
 .wide.primary{
+  background: var(--primary);
+  color:#fff;
+  font-weight: 1000;
+}
+.wide.ghost{
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.14);
+}
+
+/* ========== 百岳頁：搜尋/篩選/清單 ========== */
+.search-row{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+}
+.search{
+  flex:1;
+  border: 1px solid rgba(0,0,0,.16);
+  border-radius: 14px;
+  padding: 12px 12px;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+}
+.search-clear{
+  border:none;
+  border-radius: 14px;
+  padding: 12px 12px;
+  background: #ffe3b0;
+  cursor:pointer;
+  font-size: 13px;
+  border: 1px solid rgba(0,0,0,.10);
+}
+
+.filter-row{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.chip{
+  border: 1px solid rgba(0,0,0,.14);
+  background: #fff;
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor:pointer;
+}
+.chip.active{
+  background: #fff1cf;
+  border-color: rgba(0,0,0,.18);
+  font-weight: 900;
+}
+
+.list-card{ padding: 10px; }
+.m-list{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.m-item{
+  background:#fff;
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 16px;
+  padding: 12px;
+  display:flex;
+  gap: 10px;
+  align-items:flex-start;
+}
+
+.m-check{
+  margin-top: 4px;
+  transform: scale(1.25);
+  accent-color: #ff7c4a;
+}
+
+.m-main{ flex:1; }
+.m-top{
+  display:flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items:center;
+}
+.m-name{
+  font-weight: 1000;
+}
+.m-meta{
+  font-size: 12px;
+  color:#666;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.badge{
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: rgba(255,181,75,.18);
+  white-space: nowrap;
+}
+.badge.advanced{ background: rgba(255,107,107,.16); }
+.badge.intermediate{ background: rgba(255,181,75,.18); }
+.badge.beginner{ background: rgba(120,200,120,.16); }
+
+.m-actions{
+  margin-top: 8px;
+  display:flex;
+  gap: 8px;
+}
+.m-btn{
+  border:none;
+  border-radius: 12px;
+  padding: 10px 10px;
+  cursor:pointer;
+  font-size: 13px;
+  background: #ffe3b0;
+  border: 1px solid rgba(0,0,0,.10);
+}
+.m-btn.primary{
   background: var(--primary);
   color:#fff;
   font-weight: 900;
 }
 
-.wide.ghost{
+/* ========== 日記頁 ========== */
+.j-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.j-label{
+  font-size: 12px;
+  color:#555;
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.j-span2{ grid-column: span 2; }
+
+.j-input{
+  border: 1px solid rgba(0,0,0,.16);
+  border-radius: 14px;
+  padding: 12px 12px;
+  font-size: 14px;
   background: #fff;
-  border: 1px solid rgba(0,0,0,.14);
+  outline: none;
+}
+.j-text{
+  border: 1px solid rgba(0,0,0,.16);
+  border-radius: 14px;
+  padding: 12px 12px;
+  font-size: 14px;
+  background: #fff;
+  outline: none;
+  resize: vertical;
+}
+
+.j-actions{
+  display:flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.j-btn{
+  border:none;
+  border-radius: 14px;
+  padding: 12px 12px;
+  cursor:pointer;
+  font-size: 14px;
+  background: #ffe3b0;
+  border: 1px solid rgba(0,0,0,.10);
+}
+.j-btn.primary{
+  background: var(--primary);
+  color:#fff;
+  font-weight: 1000;
+}
+.j-btn.danger{
+  background: rgba(255,107,107,.18);
+  border: 1px solid rgba(255,107,107,.35);
+}
+
+.j-list{
+  margin-top: 10px;
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.j-item{
+  background:#fff;
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 16px;
+  padding: 12px;
+}
+.j-top{
+  display:flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+.j-title{
+  font-weight: 1000;
+}
+.j-sub{
+  font-size: 12px;
+  color:#666;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.j-note{
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color:#333;
+  white-space: pre-wrap;
+}
+.j-mini-actions{
+  margin-top: 10px;
+  display:flex;
+  gap: 8px;
 }
