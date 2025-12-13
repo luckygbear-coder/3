@@ -11,6 +11,7 @@ const STORAGE = {
   history: "bear100_draw_history",
   diary: "bear100_diary_today",
   milestone: "bear100_milestone_last"
+  STORAGE.conquered = "bear100_conquered_log";
 };
 
 let allMountains = [];
@@ -336,6 +337,10 @@ function toggleVisited(id){
   }else{
     visited.add(key);
     toast("+1 已征服 ✅");
+    const m = allMountains.find(x => String(x.id) === key);
+const log = loadArr(STORAGE.conquered);
+log.unshift({ ts: nowISO(), id: key, name: m ? m.name : "未知" });
+saveArr(STORAGE.conquered, log.slice(0, 50));
   }
   saveSet(STORAGE.visited, visited);
   updateProgress();
@@ -505,6 +510,8 @@ async function exportHistoryImage(){
     <div class="export-wrap" id="historyExport">
       <div class="export-title">出遊熊百岳｜抽卡紀錄</div>
       <div class="export-sub">（顯示最近 ${top.length} 筆）</div>
+      const recent = loadArr(STORAGE.conquered).slice(0,3).map(x=>x.name).filter(Boolean);
+const recentHtml = recent.length ? `<div class="export-sub" style="margin-top:8px;">🏔️ 最近征服：<b>${escapeHtml(recent.join("、"))}</b></div>` : "";
       <div class="export-ig">📷 IG：@luckygbear</div>
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:10px;">
         ${top.map(h=>`
