@@ -1,17 +1,34 @@
 * { box-sizing: border-box; }
 
+:root{
+  --bg: #ffb54b;
+  --paper: #fff6dc;
+  --card: #fffdf7;
+  --line: rgba(0,0,0,.08);
+  --shadow: 0 6px 18px rgba(0,0,0,.16);
+  --radius: 18px;
+  --primary: linear-gradient(90deg,#ff8f3f,#ff6b6b);
+}
+
 body {
   margin: 0;
-  font-family: "Noto Sans TC", system-ui, sans-serif;
-  background: #ffb54b;
+  font-family: "Noto Sans TC", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
 }
 
 .app {
   max-width: 480px;
-  margin: auto;
-  padding: 12px;
-  background: #fff6dc;
+  margin: 0 auto;
+  background: var(--paper);
   min-height: 100vh;
+  padding: 12px 12px 0;
+  position: relative;
+}
+
+/* 內容可捲動；底部留空給 dock + bottom nav */
+.content{
+  min-height: 100vh;
+  padding-bottom: 200px; /* 給 dock + bottom-nav 的空間 */
 }
 
 .header {
@@ -21,39 +38,55 @@ body {
   background: #ffe3b0;
   padding: 10px;
   border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.06);
 }
 
-.bear img {
-  width: 52px;
-  height: 52px;
+.bear{
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
+  overflow: hidden;
+  flex: 0 0 auto;
+  background: rgba(255,255,255,.6);
+  border: 1px solid rgba(0,0,0,.08);
 }
 
-.header-info {
-  flex: 1;
+/* ✅ 圖片等比例顯示、不裁切 */
+.bear img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;   /* 關鍵：等比例完整顯示 */
+  display: block;
 }
 
-.status {
-  font-size: 14px;
-}
-
-.progress-text {
-  font-weight: bold;
-}
+.header-info { flex: 1; }
+.status { font-size: 14px; }
+.progress-text { font-weight: 700; }
 
 .card {
-  background: #fffdf7;
-  border-radius: 16px;
+  background: var(--card);
+  border-radius: var(--radius);
   padding: 14px;
   margin-top: 12px;
-  box-shadow: 0 3px 10px rgba(0,0,0,.15);
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0,0,0,.06);
 }
+
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+}
+
+.muted{ color:#777; font-size:12px; }
 
 .progress-bar {
   height: 10px;
   background: #eee;
   border-radius: 99px;
   overflow: hidden;
+  margin-top: 8px;
 }
 
 .progress-fill {
@@ -62,92 +95,203 @@ body {
   background: linear-gradient(90deg,#ff9f43,#ff6b6b);
 }
 
-.small {
-  font-size: 12px;
-  color: #777;
-}
+.small { font-size: 12px; color: #777; margin-top: 8px; }
 
-.bear-talk {
-  font-size: 14px;
-  line-height: 1.6;
-}
+.bear-talk { font-size: 14px; line-height: 1.6; }
+.hint { font-size: 12px; color: #999; margin-top: 6px; }
 
-.hint {
-  font-size: 12px;
-  color: #999;
-  margin-top: 6px;
-}
+.checkbox { display: block; margin: 6px 0 10px; }
 
-.checkbox {
-  display: block;
-  margin-bottom: 8px;
-}
-
-.route {
-  background: #fff;
-  border-radius: 14px;
+.route{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  background:#fff;
+  border-radius: 16px;
   padding: 12px;
-  margin-top: 8px;
   border: 2px solid #f1c27d;
   cursor: pointer;
+  margin-top: 10px;
 }
 
-.route span {
-  display: block;
-  font-size: 12px;
-  color: #777;
+.route-icon{
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(255,181,75,.25);
+  border: 1px solid rgba(0,0,0,.06);
+  font-size: 20px;
 }
+.route-icon.warn{ background: rgba(255,107,107,.18); }
 
-.actions {
+.route-mid{ flex:1; }
+.route-title{ font-weight: 800; }
+.route-sub{ font-size: 12px; color:#777; margin-top:2px; }
+.route-right{ color:#999; font-size: 20px; }
+
+.bottom-spacer{ height: 20px; }
+
+/* ✅ 固定在最底下：按鈕 Dock */
+.dock{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 64px; /* 留給 bottom-nav */
+  width: min(480px, calc(100vw - 24px));
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-top: 12px;
+  z-index: 20;
 }
 
-.actions .primary {
-  grid-column: span 2;
-}
-
-button {
+.dock-btn{
   border: none;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 12px;
   background: #ffd18b;
   font-size: 14px;
   cursor: pointer;
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
 }
 
-button.primary {
-  background: linear-gradient(90deg,#ff8f3f,#ff6b6b);
+.dock-btn.primary{
+  grid-column: span 2;
+  background: var(--primary);
   color: #fff;
-  font-weight: bold;
+  font-weight: 800;
 }
 
-.result p {
-  margin: 6px 0;
-}
-
-.risk {
-  color: #c0392b;
-}
-
-.hidden {
-  display: none;
-}
-
-.bottom-nav {
-  display: flex;
+/* Bottom Nav */
+.bottom-nav{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: min(480px, 100vw);
+  background: rgba(255,246,220,.92);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid var(--line);
+  display:flex;
   justify-content: space-around;
-  margin-top: 16px;
-  padding-top: 8px;
-  border-top: 1px solid #ddd;
+  padding: 10px 6px 14px;
+  z-index: 15;
 }
 
-.bottom-nav button {
+.bottom-nav button{
+  border:none;
   background: none;
+  font-size: 13px;
+  padding: 6px 10px;
+  color:#666;
+  cursor: pointer;
 }
 
-.bottom-nav .active {
-  font-weight: bold;
+.bottom-nav .active{
+  color:#222;
+  font-weight: 900;
+}
+
+/* ✅ Modal（彈跳視窗） */
+.modal.hidden{ display:none; }
+
+.modal{
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+.modal-mask{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.38);
+}
+
+.modal-card{
+  position:absolute;
+  left:50%;
+  top: 52%;
+  transform: translate(-50%,-50%);
+  width: min(440px, calc(100vw - 26px));
+  background: #fffdf7;
+  border-radius: 18px;
+  border: 2px solid #f1c27d;
+  box-shadow: 0 20px 50px rgba(0,0,0,.35);
+  overflow: hidden;
+}
+
+.modal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 12px 12px;
+  background: #fff1cf;
+  border-bottom: 1px dashed rgba(0,0,0,.16);
+}
+
+.modal-title{ font-weight: 900; }
+.modal-close{
+  border:none;
+  background:#fff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor:pointer;
+  border: 1px solid rgba(0,0,0,.12);
+}
+
+.modal-body{
+  padding: 14px 14px 10px;
+}
+
+.big-title{
+  font-size: 20px;
+  font-weight: 1000;
+}
+.subline{
+  margin-top: 6px;
+  color:#444;
+  font-size: 13px;
+}
+.divider{
+  height: 1px;
+  background: rgba(0,0,0,.10);
+  margin: 12px 0;
+}
+
+.mountain-name{ font-weight: 900; font-size: 16px; }
+.mountain-info{ color:#666; font-size: 12px; margin-top: 2px; }
+
+.txt{ margin: 8px 0; line-height: 1.6; font-size: 13px; color:#333; }
+.risk{ color:#c0392b; font-size: 13px; line-height: 1.6; }
+
+.igline{ color:#666; font-size: 12px; }
+
+.modal-actions{
+  display:flex;
+  gap: 10px;
+  padding: 12px;
+  background: #fff7e4;
+  border-top: 1px dashed rgba(0,0,0,.14);
+}
+
+.wide{
+  flex:1;
+  border:none;
+  border-radius: 14px;
+  padding: 12px;
+  cursor:pointer;
+  font-size: 14px;
+}
+
+.wide.primary{
+  background: var(--primary);
+  color:#fff;
+  font-weight: 900;
+}
+
+.wide.ghost{
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.14);
 }
