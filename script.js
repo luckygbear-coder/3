@@ -652,8 +652,7 @@ if($("#bearAvatar") && $("#bearQuote")){
   $("#bearAvatar").addEventListener("click", ()=> setRandomQuote());
 }
   // buttons
-  $$(".route-card").forEach(btn=> btn.addEventListener("click", ()=> drawOne(btn.dataset.diff)));
-  $("#btnDrawAny").addEventListener("click", ()=> drawOne("any"));
+$$(".route-tile").forEach(btn=> btn.addEventListener("click", ()=> drawOne(btn.dataset.diff)));  $("#btnDrawAny").addEventListener("click", ()=> drawOne("any"));
 
   $("#btnOpenHistory").addEventListener("click", ()=> openHistoryModal());
   $("#btnCall119").addEventListener("click", callEmergency);
@@ -708,10 +707,9 @@ if($("#bearAvatar") && $("#bearQuote")){
   renderList();
   renderDiaryPreview();
   switchPage("Draw");
-if(name==="Diary") {
   renderMountainOptions();
+  bindDiaryForm();
   renderHikeList();
-}
   // ✅ 安裝提示延後，且保證 DOM 都準備好了
   setTimeout(showInstallHint, 1500);
 }
