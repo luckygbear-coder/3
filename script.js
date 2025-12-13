@@ -184,27 +184,32 @@ function checkMilestone(count){
 }
 
 function openCongratsModal(m, total){
+  const recent = loadArr(STORAGE.conquered).slice(0, 3).map(x=>x.name).filter(Boolean);
+  const recentHtml = recent.length
+    ? `<div class="export-sub" style="margin-top:8px;">🏔️ 最近征服：<b>${escapeHtml(recent.join("、"))}</b></div>`
+    : "";
+
   openModal(`🎉 特別祝賀卡：已征服 ${m} 座！`, `
     <div class="export-wrap" id="congratsExport">
-      <div class="export-title">你太猛了！已完成 <span style="color:#ff4b4b;font-weight:1000;">${m}</span> / ${total}</div>
-      <div class="export-sub">🐻 熊熊說：每一步都算數。你不是在跟別人比，你是在超越昨天的自己。</div>
+      <div class="export-title">出遊熊百岳｜征服證書</div>
+      <div class="export-sub">✅ 已征服 <span style="color:#ff4b4b;font-weight:1000;">${m}</span> / ${total} 座</div>
+      ${recentHtml}
       <div class="mount-tags" style="margin-top:10px;">
-        <span class="tag">✅ 下一個目標：${m+10} 座</span>
-        <span class="tag">⭐ 再解鎖一張祝賀卡</span>
+        <span class="tag">下一個目標：${m+10} 座</span>
+        <span class="tag">記得安全下山 🐻</span>
       </div>
       <div class="export-ig">📷 IG：@luckygbear</div>
     </div>
   `, `
-    <button class="btn primary" id="btnExportCongrats">📸 匯出 IG 祝賀圖</button>
-    <button class="btn ghost" id="btnCloseCongrats">稍後</button>
+    <button class="btn primary" id="btnExportCongrats">📸 匯出證書圖</button>
+    <button class="btn ghost" id="btnCloseCongrats">關閉</button>
   `);
 
   $("#btnExportCongrats").onclick = async () => {
-    await exportElementAsImage($("#congratsExport"), `bear-congrats-${m}.png`);
+    await exportElementAsImage($("#congratsExport"), `bear-certificate-${m}.png`);
   };
   $("#btnCloseCongrats").onclick = closeModal;
 }
-
 // ===== bear quote =====
 function setRandomQuote(){
   const q = bearQuotes[Math.floor(Math.random() * bearQuotes.length)];
@@ -513,13 +518,18 @@ async function exportHistoryImage(){
   if(hist.length===0){ toast("目前沒有紀錄可以匯出"); return; }
 
   const top = hist.slice(0, 10);
+  const recent = loadArr(STORAGE.conquered).slice(0, 3).map(x=>x.name).filter(Boolean);
+  const recentHtml = recent.length
+    ? `<div class="export-sub" style="margin-top:8px;">🏔️ 最近征服：<b>${escapeHtml(recent.join("、"))}</b></div>`
+    : "";
+
   const html = `
     <div class="export-wrap" id="historyExport">
       <div class="export-title">出遊熊百岳｜抽卡紀錄</div>
-      <div class="export-sub">（顯示最近 ${top.length} 筆）</div>
-      const recent = loadArr(STORAGE.conquered).slice(0,3).map(x=>x.name).filter(Boolean);
-const recentHtml = recent.length ? `<div class="export-sub" style="margin-top:8px;">🏔️ 最近征服：<b>${escapeHtml(recent.join("、"))}</b></div>` : "";
+      <div class="export-sub">（最近 ${top.length} 筆）</div>
+      ${recentHtml}
       <div class="export-ig">📷 IG：@luckygbear</div>
+
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:10px;">
         ${top.map(h=>`
           <div style="border:2px solid #f5d3a6;border-radius:16px;padding:10px 12px;background:#fff;">
@@ -532,10 +542,12 @@ const recentHtml = recent.length ? `<div class="export-sub" style="margin-top:8p
       </div>
     </div>
   `;
+
   openModal("📸 匯出抽卡紀錄圖", html, `
     <button class="btn primary" id="btnDoExportHistory">📸 產生圖片</button>
     <button class="btn ghost" onclick="closeModal()">關閉</button>
   `);
+
   $("#btnDoExportHistory").onclick = async ()=> exportElementAsImage($("#historyExport"), `bear-history-${Date.now()}.png`);
 }
 
