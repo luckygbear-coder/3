@@ -146,11 +146,17 @@ function updateProgress(){
   const visited = loadSet(STORAGE.visited);
   const total = allMountains.length || 100;
 
-  $("#progressPill").textContent = `✅ ${visited.size} / ${total}`;
-  $("#progressText").textContent = `${visited.size} / ${total}`;
+  const pill = $("#progressPill");
+  if(pill) pill.textContent = `登山進度：已征服 ${visited.size} 座（${visited.size}/${total}）`;
 
-  const pct = total ? (visited.size / total) * 100 : 0;
-  $("#progressBar").style.width = `${clamp(pct,0,100)}%`;
+  const txt = $("#progressText");
+  if(txt) txt.textContent = `${visited.size} / ${total}`;
+
+  const bar = $("#progressBar");
+  if(bar){
+    const pct = total ? (visited.size / total) * 100 : 0;
+    bar.style.width = `${clamp(pct,0,100)}%`;
+  }
 
   checkMilestone(visited.size);
 }
@@ -638,10 +644,13 @@ async function init(){
   $("#modal").addEventListener("click", (e)=>{ if(e.target.id==="modal") closeModal(); });
 
   // bear quote
+if($("#bearQuote")) {
   setRandomQuote();
   enableLongPressCopy($("#bearQuote"));
+}
+if($("#bearAvatar") && $("#bearQuote")){
   $("#bearAvatar").addEventListener("click", ()=> setRandomQuote());
-
+}
   // buttons
   $$(".route-card").forEach(btn=> btn.addEventListener("click", ()=> drawOne(btn.dataset.diff)));
   $("#btnDrawAny").addEventListener("click", ()=> drawOne("any"));
