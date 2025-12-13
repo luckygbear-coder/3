@@ -16,74 +16,96 @@
 
 <div class="app">
 
-  <!-- Header -->
-  <header class="header">
-    <div class="bear">
-      <img src="./images/bear.png" alt="登山熊">
-    </div>
-    <div class="header-info">
-      <div class="status">⛰️ 今日狀態：<span id="todayStatus">準備出發</span></div>
-      <div class="progress-text">✅ <span id="progressCount">0</span> / 100</div>
-    </div>
-  </header>
+  <!-- 可捲動內容區 -->
+  <main class="content" id="content">
 
-  <!-- Progress -->
-  <section class="card">
-    <h3>登山進度</h3>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-    <p class="small">每征服 10 座會解鎖祝賀卡 🎉</p>
+    <!-- Header -->
+    <header class="header">
+      <div class="bear">
+        <!-- 你的熊熊圖：請放在 /images/bear.png -->
+        <img src="./images/bear.png" alt="登山熊" />
+      </div>
+
+      <div class="header-info">
+        <div class="status">⛰️ 今日狀態：<span id="todayStatus">準備出發</span></div>
+        <div class="progress-text">✅ <span id="progressCount">0</span> / 100</div>
+      </div>
+    </header>
+
+    <!-- Progress -->
+    <section class="card">
+      <div class="row">
+        <h3>登山進度</h3>
+        <div class="muted"><span id="progressCount2">0</span> / 100</div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <p class="small">每征服 10 座會解鎖祝賀卡 🎉</p>
+    </section>
+
+    <!-- Bear Talk -->
+    <section class="card bear-talk" id="bearTalk">
+      🐻 熊熊說：把安全放第一名，你就已經是高手了。
+      <div class="hint">提示：長按可複製小語</div>
+    </section>
+
+    <!-- Route -->
+    <section class="card">
+      <h3>今天想挑戰哪種路線？</h3>
+
+      <label class="checkbox">
+        <input type="checkbox" id="collectMode" checked>
+        集卡模式（征服後不再抽）
+      </label>
+
+      <div class="route" data-diff="beginner">
+        <div class="route-left">
+          <div class="route-icon">🎒</div>
+        </div>
+        <div class="route-mid">
+          <div class="route-title">新手百岳</div>
+          <div class="route-sub">親民路線，慢慢走也很棒</div>
+        </div>
+        <div class="route-right">›</div>
+      </div>
+
+      <div class="route" data-diff="intermediate">
+        <div class="route-left">
+          <div class="route-icon">🥾</div>
+        </div>
+        <div class="route-mid">
+          <div class="route-title">進階挑戰</div>
+          <div class="route-sub">體能與準備更重要</div>
+        </div>
+        <div class="route-right">›</div>
+      </div>
+
+      <div class="route" data-diff="advanced">
+        <div class="route-left">
+          <div class="route-icon warn">⚠️</div>
+        </div>
+        <div class="route-mid">
+          <div class="route-title">熊熊提醒：需帶隊</div>
+          <div class="route-sub">曝險 / 迷途風險較高</div>
+        </div>
+        <div class="route-right">›</div>
+      </div>
+    </section>
+
+    <!-- 底部留白：避免被固定工具列遮住 -->
+    <div class="bottom-spacer"></div>
+  </main>
+
+  <!-- 固定在最底下的 App 工具列（按鈕列） -->
+  <section class="dock">
+    <button class="dock-btn" id="btnHistory">📜 抽卡紀錄</button>
+    <button class="dock-btn" id="btnExport">📸 匯出 IG 祝賀圖</button>
+    <button class="dock-btn primary" id="btnDraw">🎴 立即抽一張</button>
   </section>
 
-  <!-- Bear Talk -->
-  <section class="card bear-talk" id="bearTalk">
-    🐻 熊熊說：把安全放第一名，你就已經是高手了。
-    <div class="hint">提示：長按可複製小語</div>
-  </section>
-
-  <!-- Route -->
-  <section class="card">
-    <h3>今天想挑戰哪種路線？</h3>
-
-    <label class="checkbox">
-      <input type="checkbox" id="collectMode" checked>
-      集卡模式（征服後不再抽）
-    </label>
-
-    <div class="route" data-diff="beginner">
-      🎒 新手百岳
-      <span>親民路線，慢慢走也很棒</span>
-    </div>
-    <div class="route" data-diff="intermediate">
-      🥾 進階挑戰
-      <span>需要體能與經驗</span>
-    </div>
-    <div class="route" data-diff="advanced">
-      ⚠️ 熊熊提醒：需帶隊
-      <span>曝險 / 迷途風險較高</span>
-    </div>
-  </section>
-
-  <!-- Buttons -->
-  <section class="actions">
-    <button id="btnHistory">📜 抽卡紀錄</button>
-    <button id="btnExport">📸 匯出 IG 祝賀圖</button>
-    <button class="primary" id="btnDraw">🎴 立即抽一張</button>
-  </section>
-
-  <!-- Result -->
-  <section class="card result hidden" id="resultCard">
-    <h3 id="mName"></h3>
-    <p id="mInfo"></p>
-    <p id="mStory"></p>
-    <p id="mAdvice"></p>
-    <p class="risk" id="mRisk"></p>
-
-    <button class="primary" id="btnConquer">✅ 已征服</button>
-  </section>
-
-  <!-- Bottom Nav -->
+  <!-- Bottom Nav（像你截圖那種） -->
   <nav class="bottom-nav">
     <button class="active">抽山</button>
     <button>百岳</button>
@@ -91,6 +113,40 @@
     <button>設定</button>
   </nav>
 
+</div>
+
+<!-- 山卡彈窗 Modal -->
+<div class="modal hidden" id="modal">
+  <div class="modal-mask" id="modalMask"></div>
+
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div class="modal-title">🎉 特別祝賀卡</div>
+      <button class="modal-close" id="modalClose">關閉</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="big-title" id="mBigTitle">你太猛了！</div>
+      <div class="subline" id="mSubline">已完成 0 / 100</div>
+
+      <div class="divider"></div>
+
+      <div class="mountain-name" id="mName">—</div>
+      <div class="mountain-info" id="mInfo">—</div>
+
+      <p class="txt" id="mStory"></p>
+      <p class="txt" id="mAdvice"></p>
+      <p class="risk" id="mRisk"></p>
+
+      <div class="divider"></div>
+      <div class="igline">📷 IG @luckygbear</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="primary wide" id="btnConquer">✅ 已征服</button>
+      <button class="wide ghost" id="btnLater">稍後</button>
+    </div>
+  </div>
 </div>
 
 <script src="./script.js"></script>
