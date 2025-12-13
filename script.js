@@ -642,7 +642,8 @@ async function init(){
   // modal close
   $("#modalClose").onclick = closeModal;
   $("#modal").addEventListener("click", (e)=>{ if(e.target.id==="modal") closeModal(); });
-
+  applyAvatar();
+  bindAvatarUpload();
   // bear quote
 if($("#bearQuote")) {
   setRandomQuote();
