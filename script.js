@@ -649,7 +649,65 @@ function switchPage(name){
   if(name==="List") renderList();
   if(name==="Diary") renderDiaryPreview();
 }
+/* ===== PWA Install Prompt ===== */
+let deferredPrompt = null;
+const INSTALL_KEY = "bear100_install_prompt_shown";
 
+function isIOS(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function isInStandalone(){
+  return window.matchMedia("(display-mode: standalone)").matches
+    || window.navigator.standalone === true;
+}
+
+function showInstallHint(){
+  if(isInStandalone()) return;
+  if(localStorage.getItem(INSTALL_KEY)) return;
+
+  const hint = document.getElementById("installHint");
+  const desc = document.getElementById("installDesc");
+  const btnInstall = document.getElementById("btnInstall");
+  const btnLater = document.getElementById("btnInstallLater");
+
+  if(isIOS()){
+    desc.innerHTML = `
+      點擊 Safari 的 <b>分享</b> 圖示<br>
+      再選「<b>加入主畫面</b>」即可 🐻
+    `;
+    btnInstall.textContent = "我知道了";
+    btnInstall.onclick = ()=>{
+      hint.style.display = "none";
+      localStorage.setItem(INSTALL_KEY, "1");
+    };
+  }else{
+    btnInstall.onclick = async ()=>{
+      if(!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      hint.style.display = "none";
+      localStorage.setItem(INSTALL_KEY, "1");
+    };
+  }
+
+  btnLater.onclick = ()=>{
+    hint.style.display = "none";
+    localStorage.setItem(INSTALL_KEY, "1");
+  };
+
+  hint.style.display = "flex";
+}
+
+/* Android / Chrome install event */
+window.addEventListener("beforeinstallprompt", (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+});
+
+/* 延遲顯示（避免一進來就打擾） */
+setTimeout(showInstallHint, 1500);
 // ===== init =====
 async function init(){
   // modal close
